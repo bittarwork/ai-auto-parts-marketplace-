@@ -369,6 +369,113 @@ exports.clearChatbotHistory = async (req, res) => {
 };
 
 /**
+ * ★★ GET USER CHAT SESSIONS
+ * GET /api/ai/chatbot/sessions
+ */
+exports.getUserChatSessions = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required to view chat history'
+      });
+    }
+    
+    const { page = 1, limit = 20 } = req.query;
+    
+    const result = await chatbotService.getUserSessions(
+      req.user._id,
+      parseInt(page),
+      parseInt(limit)
+    );
+    
+    res.json({
+      success: true,
+      data: result
+    });
+    
+  } catch (error) {
+    console.error('[AI Search Controller] Error getting chat sessions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting chat sessions',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * ★★ GET SESSION MESSAGES
+ * GET /api/ai/chatbot/sessions/:sessionId
+ */
+exports.getSessionMessages = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.user ? req.user._id : null;
+    
+    const session = await chatbotService.getSessionMessages(sessionId, userId);
+    
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        message: 'Chat session not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: session
+    });
+    
+  } catch (error) {
+    console.error('[AI Search Controller] Error getting session messages:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting session messages',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * ★ DELETE CHAT SESSION
+ * DELETE /api/ai/chatbot/sessions/:sessionId
+ */
+exports.deleteChatSession = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
+    const { sessionId } = req.params;
+    const deleted = await chatbotService.deleteSession(sessionId, req.user._id);
+    
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: 'Chat session not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Chat session deleted'
+    });
+    
+  } catch (error) {
+    console.error('[AI Search Controller] Error deleting chat session:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting chat session',
+      error: error.message
+    });
+  }
+};
+
+/**
  * ★ GET POPULAR PRODUCTS
  * GET /api/ai/popular
  */

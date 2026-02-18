@@ -2,24 +2,19 @@ const { openai, prompts, callGPT4 } = require('../config/openai');
 const { cacheHelper, cacheKeys } = require('../config/redis');
 const Vehicle = require('../models/Vehicle');
 const Product = require('../models/Product');
+const ChatSession = require('../models/ChatSession');
 
 class ChatbotService {
   
   /**
-   * Process chatbot message
-   * 
-   * @param {string} message - User message
-   * @param {string} userId - User ID (optional)
-   * @param {string} sessionId - Session ID for conversation context
-   * @param {Object} context - Additional context (product, vehicle, etc.)
-   * @returns {Object} Chatbot response
+   * Process chatbot message with persistent history and product linking
    */
   async processMessage(message, userId = null, sessionId, context = {}) {
     try {
       console.log(`[Chatbot] Processing message for session: ${sessionId}`);
       
-      // Get conversation history from cache
-      const chatHistory = await this.getChatHistory(sessionId);
+      // Get conversation history from cache (fast) or DB (fallback)
+      let chatHistory = await this.getChatHistory(sessionId);
       
       // Get user vehicles if available
       let userVehicles = [];
@@ -49,6 +44,9 @@ class ChatbotService {
         messages[0].content += contextMessage;
       }
       
+      // Add product linking instructions to system prompt
+      messages[0].content += `\n\nIMPORTANT: When you identify or recommend specific auto parts, mention them clearly by name and type so the system can link them. For example: "I recommend the Oil Filter for Chery Tiggo" or "You might need Brake Pads for your vehicle."`;
+      
       // Add conversation history (last 5 messages)
       chatHistory.slice(-5).forEach(msg => {
         messages.push({
@@ -65,46 +63,307 @@ class ChatbotService {
       
       // Call GPT-4
       const response = await callGPT4(messages, {
-        temperature: 0.7, // Slightly higher for more natural conversation
+        temperature: 0.7,
         maxTokens: 500
       });
       
-      // Update chat history
-      await this.updateChatHistory(sessionId, [
-        { role: 'user', content: message, timestamp: new Date() },
-        { role: 'assistant', content: response, timestamp: new Date() }
-      ]);
+      // Search for relevant products mentioned in the response
+      const suggestedProducts = await this.findMentionedProducts(response, message, userVehicles);
+      
+      // Prepare message records
+      const userMsg = { role: 'user', content: message, timestamp: new Date() };
+      const assistantMsg = { 
+        role: 'assistant', 
+        content: response, 
+        timestamp: new Date(),
+        suggestedProducts: suggestedProducts.map(p => ({
+          productId: p._id,
+          name: p.name?.en || p.name?.ar || '',
+          partNumber: p.partNumber,
+          price: p.price,
+          currency: p.currency,
+          image: p.images?.[0]?.url || ''
+        }))
+      };
+      
+      // Update cache (fast access)
+      await this.updateChatHistory(sessionId, [userMsg, assistantMsg]);
+      
+      // Persist to MongoDB (durable storage)
+      await this.persistToDatabase(sessionId, userId, [userMsg, assistantMsg], context);
       
       return {
         message: response,
         sessionId,
-        timestamp: new Date()
+        timestamp: new Date(),
+        suggestedProducts: suggestedProducts.map(p => ({
+          id: p._id,
+          name: p.name,
+          partNumber: p.partNumber,
+          price: p.price,
+          currency: p.currency,
+          image: p.images?.[0]?.url || '',
+          stock: p.stock,
+          link: `/products/${p._id}`
+        }))
       };
       
     } catch (error) {
       console.error('[Chatbot] Error processing message:', error);
       
-      // Return fallback response
       return {
         message: this.getFallbackResponse(message),
         sessionId,
         timestamp: new Date(),
+        suggestedProducts: [],
         error: true
       };
     }
   }
   
   /**
+   * Find products mentioned in the AI response or related to user query
+   */
+  async findMentionedProducts(aiResponse, userMessage, userVehicles = []) {
+    try {
+      const combinedText = `${userMessage} ${aiResponse}`.toLowerCase();
+      
+      // Part type keywords to search for
+      const partKeywords = [
+        'brake pad', 'brake disc', 'oil filter', 'air filter', 'spark plug',
+        'headlight', 'tail light', 'bumper', 'mirror', 'battery', 'alternator',
+        'starter', 'radiator', 'thermostat', 'water pump', 'fuel pump',
+        'timing belt', 'serpentine belt', 'shock absorber', 'strut',
+        'control arm', 'tie rod', 'ball joint', 'wheel bearing',
+        'clutch', 'transmission', 'engine mount', 'exhaust', 'muffler',
+        'wiper', 'cabin filter', 'fuel filter', 'sensor', 'coil'
+      ];
+      
+      // Find which part types are mentioned
+      const mentionedParts = partKeywords.filter(part => combinedText.includes(part));
+      
+      if (mentionedParts.length === 0) return [];
+      
+      // Build search query
+      let searchQuery = {
+        isActive: true,
+        $or: mentionedParts.map(part => ({
+          $or: [
+            { 'name.en': { $regex: part, $options: 'i' } },
+            { 'searchKeywords.en': { $regex: part, $options: 'i' } }
+          ]
+        }))
+      };
+      
+      // If user has vehicles, prefer compatible products
+      if (userVehicles.length > 0) {
+        const primaryVehicle = userVehicles.find(v => v.isPrimary) || userVehicles[0];
+        if (primaryVehicle) {
+          searchQuery['compatibility'] = {
+            $elemMatch: {
+              brand: primaryVehicle.brand,
+              model: primaryVehicle.model,
+              yearFrom: { $lte: primaryVehicle.year },
+              yearTo: { $gte: primaryVehicle.year }
+            }
+          };
+        }
+      }
+      
+      // Also check for brand mentions in the text
+      const brands = ['chery', 'geely', 'mg', 'haval', 'great wall', 'changan', 'byd'];
+      const mentionedBrand = brands.find(b => combinedText.includes(b));
+      if (mentionedBrand && !searchQuery['compatibility']) {
+        searchQuery['compatibility.brand'] = new RegExp(mentionedBrand, 'i');
+      }
+      
+      const products = await Product.find(searchQuery)
+        .select('name partNumber price currency images stock compatibility')
+        .sort({ purchaseCount: -1, averageRating: -1 })
+        .limit(3)
+        .lean();
+      
+      return products;
+    } catch (error) {
+      console.error('[Chatbot] Error finding mentioned products:', error);
+      return [];
+    }
+  }
+  
+  /**
+   * Persist chat messages to MongoDB for permanent storage
+   */
+  async persistToDatabase(sessionId, userId, newMessages, context = {}) {
+    try {
+      let session = await ChatSession.findOne({ sessionId });
+      
+      if (!session) {
+        // Create new session
+        session = new ChatSession({
+          sessionId,
+          user: userId || null,
+          messages: newMessages,
+          context: {
+            productId: context.productId || null,
+            currentPage: context.currentPage || ''
+          },
+          lastMessageAt: new Date()
+        });
+        session.generateTitle();
+      } else {
+        // Append messages to existing session
+        session.messages.push(...newMessages);
+        session.lastMessageAt = new Date();
+        
+        // Update user if not set and now available
+        if (!session.user && userId) {
+          session.user = userId;
+        }
+        
+        // Update context if provided
+        if (context.productId) {
+          session.context.productId = context.productId;
+        }
+        
+        // Generate title if still default
+        if (session.title === 'New Conversation') {
+          session.generateTitle();
+        }
+      }
+      
+      await session.save();
+      console.log(`[Chatbot] Persisted messages to DB for session: ${sessionId}`);
+    } catch (error) {
+      console.error('[Chatbot] Error persisting to database:', error);
+    }
+  }
+  
+  /**
+   * Get user's chat sessions list (for history panel)
+   */
+  async getUserSessions(userId, page = 1, limit = 20) {
+    try {
+      const skip = (page - 1) * limit;
+      
+      const sessions = await ChatSession.find({ 
+        user: userId,
+        isActive: true 
+      })
+        .select('sessionId title lastMessageAt messages createdAt')
+        .sort({ lastMessageAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+      
+      const total = await ChatSession.countDocuments({ 
+        user: userId,
+        isActive: true 
+      });
+      
+      // Return sessions with message count and last message preview
+      return {
+        sessions: sessions.map(s => ({
+          sessionId: s.sessionId,
+          title: s.title,
+          lastMessageAt: s.lastMessageAt,
+          createdAt: s.createdAt,
+          messageCount: s.messages.length,
+          lastMessage: s.messages.length > 0 
+            ? s.messages[s.messages.length - 1].content.substring(0, 80) + '...'
+            : ''
+        })),
+        total,
+        page,
+        pages: Math.ceil(total / limit)
+      };
+    } catch (error) {
+      console.error('[Chatbot] Error getting user sessions:', error);
+      return { sessions: [], total: 0, page: 1, pages: 0 };
+    }
+  }
+  
+  /**
+   * Get full messages for a specific session
+   */
+  async getSessionMessages(sessionId, userId = null) {
+    try {
+      const query = { sessionId };
+      if (userId) query.user = userId;
+      
+      const session = await ChatSession.findOne(query)
+        .populate('messages.suggestedProducts.productId', 'name partNumber price currency images stock')
+        .lean();
+      
+      if (!session) return null;
+      
+      return {
+        sessionId: session.sessionId,
+        title: session.title,
+        messages: session.messages.map(m => ({
+          role: m.role,
+          content: m.content,
+          timestamp: m.timestamp,
+          suggestedProducts: (m.suggestedProducts || []).map(p => ({
+            id: p.productId?._id || p.productId,
+            name: p.name,
+            partNumber: p.partNumber,
+            price: p.price,
+            currency: p.currency,
+            image: p.image,
+            link: `/products/${p.productId?._id || p.productId}`
+          }))
+        })),
+        createdAt: session.createdAt,
+        lastMessageAt: session.lastMessageAt
+      };
+    } catch (error) {
+      console.error('[Chatbot] Error getting session messages:', error);
+      return null;
+    }
+  }
+  
+  /**
+   * Delete a chat session (soft delete)
+   */
+  async deleteSession(sessionId, userId) {
+    try {
+      const result = await ChatSession.findOneAndUpdate(
+        { sessionId, user: userId },
+        { isActive: false },
+        { new: true }
+      );
+      return !!result;
+    } catch (error) {
+      console.error('[Chatbot] Error deleting session:', error);
+      return false;
+    }
+  }
+  
+  /**
    * Get chat history from cache
-   * 
-   * @param {string} sessionId - Session ID
-   * @returns {Array} Chat history
    */
   async getChatHistory(sessionId) {
     try {
       const cacheKey = cacheKeys.chatContext(sessionId);
       const history = await cacheHelper.get(cacheKey);
-      return history || [];
+      
+      // If not in cache, try to load from DB
+      if (!history) {
+        const session = await ChatSession.findOne({ sessionId }).lean();
+        if (session && session.messages.length > 0) {
+          const dbHistory = session.messages.map(m => ({
+            role: m.role,
+            content: m.content,
+            timestamp: m.timestamp
+          }));
+          // Re-cache the history
+          await cacheHelper.set(cacheKey, dbHistory, 3600);
+          return dbHistory;
+        }
+        return [];
+      }
+      
+      return history;
     } catch (error) {
       console.error('[Chatbot] Error getting chat history:', error);
       return [];
@@ -113,16 +372,12 @@ class ChatbotService {
   
   /**
    * Update chat history in cache
-   * 
-   * @param {string} sessionId - Session ID
-   * @param {Array} newMessages - New messages to add
    */
   async updateChatHistory(sessionId, newMessages) {
     try {
       const cacheKey = cacheKeys.chatContext(sessionId);
       const history = await this.getChatHistory(sessionId);
       
-      // Add new messages
       history.push(...newMessages);
       
       // Keep only last 20 messages to prevent context from getting too large
@@ -138,8 +393,6 @@ class ChatbotService {
   
   /**
    * Clear chat history for a session
-   * 
-   * @param {string} sessionId - Session ID
    */
   async clearChatHistory(sessionId) {
     try {
@@ -153,17 +406,11 @@ class ChatbotService {
   
   /**
    * Get fallback response when AI fails
-   * 
-   * @param {string} message - User message
-   * @returns {string} Fallback response
    */
   getFallbackResponse(message) {
     const lowerMessage = message.toLowerCase();
-    
-    // Detect language (simple heuristic)
     const isArabic = /[\u0600-\u06FF]/.test(message);
     
-    // Common intents
     if (lowerMessage.includes('price') || lowerMessage.includes('سعر')) {
       return isArabic
         ? 'عذراً، لا أستطيع الوصول إلى معلومات الأسعار حالياً. يرجى تصفح المنتجات مباشرة أو التواصل مع فريق الدعم.'
@@ -182,7 +429,6 @@ class ChatbotService {
         : 'To check if a part fits your car, please add your vehicle to your profile or search for your car brand and model.';
     }
     
-    // Default fallback
     return isArabic
       ? 'عذراً، أواجه بعض الصعوبة في فهم سؤالك. هل يمكنك إعادة صياغته؟ أو يمكنك التواصل مع فريق الدعم للمساعدة.'
       : 'Sorry, I\'m having trouble understanding your question. Could you rephrase it? Or you can contact our support team for assistance.';
@@ -190,9 +436,6 @@ class ChatbotService {
   
   /**
    * Get quick action suggestions
-   * 
-   * @param {string} language - Language ('ar' or 'en')
-   * @returns {Array} Quick actions
    */
   getQuickActions(language = 'en') {
     if (language === 'ar') {

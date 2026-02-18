@@ -96,8 +96,29 @@ router.post('/chatbot', optionalAuth, aiSearchController.chatbotMessage);
 router.get('/chatbot/quick-actions', aiSearchController.getChatbotQuickActions);
 
 /**
+ * @route   GET /api/ai/chatbot/sessions
+ * @desc    Get user's chat session history
+ * @access  Private
+ */
+router.get('/chatbot/sessions', protect, aiSearchController.getUserChatSessions);
+
+/**
+ * @route   GET /api/ai/chatbot/sessions/:sessionId
+ * @desc    Get messages for a specific chat session
+ * @access  Public (but filtered by user if authenticated)
+ */
+router.get('/chatbot/sessions/:sessionId', optionalAuth, aiSearchController.getSessionMessages);
+
+/**
+ * @route   DELETE /api/ai/chatbot/sessions/:sessionId
+ * @desc    Delete (soft) a chat session
+ * @access  Private
+ */
+router.delete('/chatbot/sessions/:sessionId', protect, aiSearchController.deleteChatSession);
+
+/**
  * @route   DELETE /api/ai/chatbot/:sessionId
- * @desc    Clear chatbot conversation history
+ * @desc    Clear chatbot conversation history (cache only)
  * @access  Public
  */
 router.delete('/chatbot/:sessionId', aiSearchController.clearChatbotHistory);
