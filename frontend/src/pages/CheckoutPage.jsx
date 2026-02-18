@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import Container from '../components/common/Container';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
-import Alert from '../components/common/Alert';
 import { InlineLoader } from '../components/common/Spinner';
 import cartService from '../services/cartService';
 import orderService from '../services/orderService';
@@ -32,7 +32,6 @@ export default function CheckoutPage() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [alert, setAlert] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
 
   // Saved addresses
@@ -103,7 +102,7 @@ export default function CheckoutPage() {
         }
       }
     } catch (error) {
-      setAlert({ type: 'error', message: 'Failed to load checkout data' });
+      toast.error('Failed to load checkout data');
     } finally {
       setLoading(false);
     }
@@ -181,36 +180,35 @@ export default function CheckoutPage() {
       const errs = {};
       if (!shippingForm.fullName) errs.fullName = 'Full name is required';
       if (!shippingForm.email) errs.email = 'Email is required';
-      if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+      if (Object.keys(errs).length > 0) {
+        setErrors(errs);
+        toast.error('Please fill in all required fields');
+        return;
+      }
       setCurrentStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (validateShipping()) {
       setCurrentStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      toast.error('Please fill in all required fields');
     }
   };
   
   const handlePlaceOrder = async () => {
     if (!paymentMethod) {
-      setAlert({
-        type: 'error',
-        message: 'Please select a payment method'
-      });
+      toast.error('Please select a payment method');
       return;
     }
     
     setSubmitting(true);
-    setAlert(null);
     
     try {
       // Validate cart first
       const validation = await cartService.validateCart();
       
       if (!validation.success || !validation.data.isValid) {
-        setAlert({
-          type: 'error',
-          message: 'Some items in your cart are no longer available. Please review your cart.'
-        });
+        toast.error('Some items in your cart are no longer available. Please review your cart.');
         setSubmitting(false);
         return;
       }
@@ -245,18 +243,13 @@ export default function CheckoutPage() {
       
       if (response.success) {
         refreshCartCount();
-        setAlert({
-          type: 'success',
-          message: 'Order placed successfully!'
-        });
+        toast.success('Order placed successfully!');
         setTimeout(() => navigate(`/orders/${response.data._id}`), 2000);
       }
     } catch (error) {
       console.error('Error placing order:', error);
-      setAlert({
-        type: 'error',
-        message: error?.message || error?.error || 'Failed to place order. Please try again.'
-      });
+      const msg = error?.response?.data?.message || error?.message || error?.error || 'Failed to place order. Please try again.';
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -326,17 +319,6 @@ export default function CheckoutPage() {
             ))}
           </div>
         </div>
-        
-        {/* Alert */}
-        {alert && (
-          <Alert
-            type={alert.type}
-            message={alert.message}
-            dismissible
-            onDismiss={() => setAlert(null)}
-            className="mb-6"
-          />
-        )}
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
