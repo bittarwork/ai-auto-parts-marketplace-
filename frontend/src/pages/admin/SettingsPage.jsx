@@ -1,19 +1,26 @@
 import { useEffect, useState } from 'react';
 import {
-  Cog6ToothIcon, TruckIcon, CalculatorIcon, BellIcon, CheckIcon
+  Cog6ToothIcon,
+  TruckIcon,
+  CalculatorIcon,
+  BellIcon,
+  CheckIcon,
+  RocketLaunchIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { getSettings, updateSettings } from '../../services/adminService';
 import toast from 'react-hot-toast';
 
 /**
  * Admin Settings Page
- * Modern tab-based settings with icon tabs, smooth transitions
+ * Modern tab-based settings with icon tabs, smooth transitions.
+ * NOTE: This page is under active development — more powerful features coming in future releases.
  */
 
 const TABS = [
-  { id: 'general',       label: 'General',       icon: Cog6ToothIcon },
-  { id: 'shipping',      label: 'Shipping',      icon: TruckIcon },
-  { id: 'tax',           label: 'Tax',           icon: CalculatorIcon },
+  { id: 'general', label: 'General', icon: Cog6ToothIcon },
+  { id: 'shipping', label: 'Shipping', icon: TruckIcon },
+  { id: 'tax', label: 'Tax', icon: CalculatorIcon },
   { id: 'notifications', label: 'Notifications', icon: BellIcon },
 ];
 
@@ -27,16 +34,18 @@ const EMPTY = {
   taxRate: 0,
   lowStockThreshold: 5,
   notifyOnNewOrder: true,
-  notifyOnLowStock: true
+  notifyOnLowStock: true,
 };
 
+// Label with optional hint
 const Label = ({ children, hint }) => (
   <div className="mb-2">
-    <label className="text-sm font-medium text-gray-700">{children}</label>
-    {hint && <p className="text-xs text-gray-400 mt-0.5">{hint}</p>}
+    <label className="text-sm font-medium text-gray-700 block">{children}</label>
+    {hint && <p className="text-xs text-gray-500 mt-0.5">{hint}</p>}
   </div>
 );
 
+// Styled input with focus states
 const Input = ({ type = 'text', value, onChange, placeholder, min, max, step }) => (
   <input
     type={type}
@@ -46,32 +55,59 @@ const Input = ({ type = 'text', value, onChange, placeholder, min, max, step }) 
     min={min}
     max={max}
     step={step}
-    className="w-full h-10 px-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-gray-800"
+    className="w-full h-11 px-4 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400 transition-all text-gray-800 placeholder-gray-400 shadow-sm"
   />
 );
 
+// Styled select dropdown
 const Select = ({ value, onChange, children }) => (
   <select
     value={value}
     onChange={onChange}
-    className="w-full h-10 px-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-gray-800"
+    className="w-full h-11 px-4 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400 transition-all text-gray-800 shadow-sm"
   >
     {children}
   </select>
 );
 
+// Toggle switch component
 const Toggle = ({ checked, onChange, label, hint }) => (
   <label className="flex items-start gap-3 cursor-pointer group">
     <div className="relative mt-0.5 flex-shrink-0">
       <input type="checkbox" checked={checked} onChange={onChange} className="sr-only" />
-      <div className={`w-10 h-5 rounded-full transition-colors ${checked ? 'bg-blue-600' : 'bg-gray-200'}`} />
-      <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-5' : ''}`} />
+      <div
+        className={`w-11 h-6 rounded-full transition-all duration-200 ${
+          checked ? 'bg-blue-600' : 'bg-gray-200'
+        }`}
+      />
+      <div
+        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-md transition-transform duration-200 ${
+          checked ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
     </div>
     <div>
-      <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">{label}</p>
-      {hint && <p className="text-xs text-gray-400 mt-0.5">{hint}</p>}
+      <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors">{label}</p>
+      {hint && <p className="text-xs text-gray-500 mt-0.5">{hint}</p>}
     </div>
   </label>
+);
+
+// Skeleton loader for settings page
+const SettingsSkeleton = () => (
+  <div className="max-w-2xl space-y-6 animate-pulse">
+    <div className="space-y-2">
+      <div className="h-6 bg-gray-200 rounded-lg w-32" />
+      <div className="h-3 bg-gray-100 rounded w-48" />
+    </div>
+    <div className="flex gap-2 p-1.5 bg-gray-100 rounded-2xl">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="flex-1 h-9 bg-gray-200 rounded-xl" />
+      ))}
+    </div>
+    <div className="h-64 bg-gray-100 rounded-2xl" />
+    <div className="h-10 bg-gray-200 rounded-xl w-32" />
+  </div>
 );
 
 const SettingsPage = () => {
@@ -105,43 +141,67 @@ const SettingsPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-7 h-7 border-[3px] border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-      </div>
-    );
+    return <SettingsSkeleton />;
   }
 
   return (
-    <div className="max-w-2xl space-y-5">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900">Settings</h2>
-        <p className="text-xs text-gray-400 mt-0.5">Configure your store preferences</p>
+    <div className="space-y-6 max-w-2xl">
+      {/* Page header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+              <Cog6ToothIcon className="w-5 h-5 text-blue-600" />
+            </div>
+            Settings
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">Configure your store preferences</p>
+        </div>
+      </div>
+
+      {/* Future development banner */}
+      <div className="relative overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50 via-orange-50/50 to-amber-50/30 p-4 sm:p-5">
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-amber-100 border border-amber-200/60 flex items-center justify-center">
+            <RocketLaunchIcon className="w-6 h-6 text-amber-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-amber-900 flex items-center gap-2">
+              <SparklesIcon className="w-4 h-4 text-amber-600" />
+              Under Active Development
+            </h3>
+            <p className="text-xs text-amber-800/90 mt-1.5 leading-relaxed">
+              This settings page is being enhanced with more powerful features. Advanced options such as
+              multi-currency support, advanced shipping zones, notification templates, and API configurations
+              will be available in upcoming releases. Your feedback helps shape the roadmap.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Tab bar */}
-      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-1.5 flex gap-1">
-        {TABS.map(tab => (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-1.5 flex gap-1">
+        {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-xs font-semibold transition-all duration-150 ${
+            className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl text-xs font-semibold transition-all duration-200 ${
               activeTab === tab.id
-                ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
-                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                ? 'bg-blue-600 text-white shadow-sm shadow-blue-200/50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
           >
-            <tab.icon className="w-3.5 h-3.5" />
+            <tab.icon className="w-4 h-4" />
             <span className="hidden sm:inline">{tab.label}</span>
           </button>
         ))}
       </div>
 
       {/* Tab content */}
-      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm divide-y divide-gray-100">
-        {/* ── General ── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {/* General tab */}
         {activeTab === 'general' && (
-          <div className="p-6 space-y-5">
+          <div className="p-6 sm:p-7 space-y-6">
             <div>
               <Label hint="Displayed in browser tab and emails">Site Name</Label>
               <Input value={settings.siteName} onChange={e => set('siteName', e.target.value)} placeholder="Auto Parts Marketplace" />
@@ -169,9 +229,9 @@ const SettingsPage = () => {
           </div>
         )}
 
-        {/* ── Shipping ── */}
+        {/* Shipping tab */}
         {activeTab === 'shipping' && (
-          <div className="p-6 space-y-5">
+          <div className="p-6 sm:p-7 space-y-6">
             <div>
               <Label hint="Fixed shipping fee applied to all orders">Flat Shipping Rate (EUR)</Label>
               <Input type="number" min="0" step="0.01" value={settings.shippingFlatRate} onChange={e => set('shippingFlatRate', parseFloat(e.target.value))} />
@@ -189,9 +249,9 @@ const SettingsPage = () => {
           </div>
         )}
 
-        {/* ── Tax ── */}
+        {/* Tax tab */}
         {activeTab === 'tax' && (
-          <div className="p-6 space-y-5">
+          <div className="p-6 sm:p-7 space-y-6">
             <div>
               <Label hint="Applied as a percentage to all order totals">Tax Rate (%)</Label>
               <Input type="number" min="0" max="100" step="0.1" value={settings.taxRate} onChange={e => set('taxRate', parseFloat(e.target.value))} />
@@ -209,9 +269,9 @@ const SettingsPage = () => {
           </div>
         )}
 
-        {/* ── Notifications ── */}
+        {/* Notifications tab */}
         {activeTab === 'notifications' && (
-          <div className="p-6 space-y-6">
+          <div className="p-6 sm:p-7 space-y-6">
             <div>
               <Label hint="Show low stock alerts when product quantity reaches or falls below this number">Low Stock Threshold</Label>
               <div className="flex items-center gap-3">

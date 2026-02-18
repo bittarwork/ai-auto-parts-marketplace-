@@ -499,7 +499,7 @@ exports.getTopProducts = async (req, res) => {
           as: 'product'
         }
       },
-      { $unwind: { path: '$product', preserveNullAndEmpty: true } },
+      { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
       {
         $project: {
           totalSold: 1,
