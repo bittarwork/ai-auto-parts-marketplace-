@@ -95,7 +95,7 @@ const Toggle = ({ checked, onChange, label, hint }) => (
 
 // Skeleton loader for settings page
 const SettingsSkeleton = () => (
-  <div className="max-w-2xl space-y-6 animate-pulse">
+  <div className="w-full max-w-4xl space-y-6 animate-pulse">
     <div className="space-y-2">
       <div className="h-6 bg-gray-200 rounded-lg w-32" />
       <div className="h-3 bg-gray-100 rounded w-48" />
@@ -145,7 +145,7 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="w-full max-w-4xl space-y-6">
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -298,18 +298,32 @@ const SettingsPage = () => {
       </div>
 
       {/* Save button */}
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className={`flex items-center gap-2 h-10 px-6 rounded-xl text-sm font-semibold transition-all duration-200 ${
-          saved
-            ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200'
-            : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200 disabled:opacity-50'
-        }`}
-      >
-        {saving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-        {saved ? <><CheckIcon className="w-4 h-4" />Saved!</> : 'Save Changes'}
-      </button>
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className={`inline-flex items-center gap-2 h-11 px-6 rounded-xl text-sm font-semibold transition-all duration-200 ${
+            saved
+              ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200/50'
+              : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200/50 disabled:opacity-60 disabled:cursor-not-allowed'
+          }`}
+        >
+          {saving && (
+            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          )}
+          {saved ? (
+            <>
+              <CheckIcon className="w-4 h-4" />
+              Saved!
+            </>
+          ) : (
+            'Save Changes'
+          )}
+        </button>
+        {saved && (
+          <span className="text-xs text-emerald-600 font-medium">Your changes have been applied.</span>
+        )}
+      </div>
     </div>
   );
 };
