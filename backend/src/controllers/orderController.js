@@ -442,15 +442,31 @@ exports.getAllOrders = async (req, res) => {
     const query = {};
     
     if (status) {
-      query.status = status;
+      if (status === 'needs_attention') {
+        query.status = { $in: ['pending', 'confirmed', 'processing'] };
+      } else {
+        query.status = status;
+      }
     }
     
     if (paymentStatus) {
       query.paymentStatus = paymentStatus;
     }
     
-    if (search) {
-      query.orderNumber = { $regex: search, $options: 'i' };
+    if (search && search.trim()) {
+      const term = search.trim();
+      const User = require('../models/User');
+      const matchingUsers = await User.find({
+        $or: [
+          { name: { $regex: term, $options: 'i' } },
+          { email: { $regex: term, $options: 'i' } }
+        ]
+      }).select('_id').lean();
+      const customerIds = matchingUsers.map(u => u._id);
+      query.$or = [
+        { orderNumber: { $regex: term, $options: 'i' } },
+        ...(customerIds.length > 0 ? [{ customer: { $in: customerIds } }] : [])
+      ];
     }
     
     const skip = (parseInt(page) - 1) * parseInt(limit);

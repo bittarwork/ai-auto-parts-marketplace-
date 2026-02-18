@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MagnifyingGlassIcon, FunnelIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import {
+  MagnifyingGlassIcon,
+  ArrowPathIcon,
+  ExclamationTriangleIcon,
+  ShoppingBagIcon,
+  ClockIcon
+} from '@heroicons/react/24/outline';
 import DataTable from '../../components/admin/DataTable';
 import StatusBadge from '../../components/admin/StatusBadge';
-import { getAdminOrders } from '../../services/adminService';
+import { getAdminOrders, getAdminOrderQuickStats } from '../../services/adminService';
 import toast from 'react-hot-toast';
 
 /**
  * Admin Orders Management Page
- * Full-featured orders table with search, status/payment filters, and pagination
+ * Quick stats, needs attention filter, overdue highlight, search & filters
  */
 
 const ORDER_STATUSES  = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
@@ -20,8 +26,15 @@ const fmtCurrency = (v) =>
 const fmtDate = (d) =>
   new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
-/* ─── Filter Chip ─── */
-const FilterChip = ({ label, value, active, onClick }) => (
+const isOverdue = (order) => {
+  if (order.status !== 'pending') return false;
+  const created = new Date(order.createdAt).getTime();
+  const now = Date.now();
+  const hours24 = 24 * 60 * 60 * 1000;
+  return now - created > hours24;
+};
+
+const FilterChip = ({ label, active, onClick }) => (
   <button
     onClick={onClick}
     className={`h-7 px-3 rounded-full text-xs font-medium capitalize border transition-all duration-150 ${
@@ -34,15 +47,33 @@ const FilterChip = ({ label, value, active, onClick }) => (
   </button>
 );
 
+const StatBadge = ({ icon: Icon, label, value, onClick, accent = 'blue' }) => (
+  <button
+    onClick={onClick}
+    className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
+      accent === 'amber'
+        ? 'bg-amber-50 border-amber-200/60 text-amber-800 hover:bg-amber-100'
+        : accent === 'green'
+        ? 'bg-emerald-50 border-emerald-200/60 text-emerald-800 hover:bg-emerald-100'
+        : 'bg-blue-50 border-blue-200/60 text-blue-800 hover:bg-blue-100'
+    }`}
+  >
+    <Icon className="w-4 h-4" />
+    <span className="text-xs font-semibold">{label}:</span>
+    <span className="text-sm font-bold">{value}</span>
+  </button>
+);
+
 const OrdersPage = () => {
   const navigate = useNavigate();
 
   const [orders, setOrders]       = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading]     = useState(true);
+  const [stats, setStats]         = useState(null);
 
   const [search, setSearch]           = useState('');
-  const [statusFilter, setStatusFilter]   = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
   const [page, setPage]               = useState(1);
   const [sortBy, setSortBy]           = useState('createdAt');
@@ -52,12 +83,11 @@ const OrdersPage = () => {
     setLoading(true);
     try {
       const params = { page, limit: 20, sortBy, sortOrder };
-      if (search)        params.search        = search;
-      if (statusFilter)  params.status        = statusFilter;
+      if (search)        params.search = search;
+      if (statusFilter)  params.status = statusFilter;
       if (paymentFilter) params.paymentStatus = paymentFilter;
 
       const res = await getAdminOrders(params);
-      // Backend returns { data: orders[], pagination } - data is the array directly
       setOrders(Array.isArray(res.data) ? res.data : (res.data?.orders || res.orders || []));
       setPagination(res.pagination || res.data?.pagination || null);
     } catch {
@@ -67,7 +97,15 @@ const OrdersPage = () => {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const res = await getAdminOrderQuickStats();
+      setStats(res.data);
+    } catch { /* ignore */ }
+  };
+
   useEffect(() => { fetchOrders(); }, [page, statusFilter, paymentFilter, sortBy, sortOrder]);
+  useEffect(() => { fetchStats(); }, [page, statusFilter, paymentFilter]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -80,12 +118,22 @@ const OrdersPage = () => {
       key: 'orderNumber',
       label: 'Order',
       sortable: true,
-      render: (row) => (
-        <div>
-          <p className="font-mono text-xs font-semibold text-blue-600">#{row.orderNumber}</p>
-          <p className="text-xs text-gray-400 mt-0.5">{fmtDate(row.createdAt)}</p>
-        </div>
-      )
+      render: (row) => {
+        const overdue = isOverdue(row);
+        return (
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="font-mono text-xs font-semibold text-blue-600">#{row.orderNumber}</p>
+              {overdue && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200/60" title="Pending for more than 24h">
+                  <ClockIcon className="w-3 h-3" /> Overdue
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mt-0.5">{fmtDate(row.createdAt)}</p>
+          </div>
+        );
+      }
     },
     {
       key: 'customer',
@@ -133,7 +181,15 @@ const OrdersPage = () => {
 
   return (
     <div className="space-y-4">
-      {/* ── Page header ── */}
+      {/* Quick Stats */}
+      {stats && (
+        <div className="flex flex-wrap gap-2">
+          <StatBadge icon={ShoppingBagIcon} label="New today" value={stats.newToday} onClick={() => { setStatusFilter(''); setPage(1); }} accent="green" />
+          <StatBadge icon={ExclamationTriangleIcon} label="Needs attention" value={stats.needsAttention} onClick={() => { setStatusFilter('needs_attention'); setPage(1); }} accent="amber" />
+        </div>
+      )}
+
+      {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-gray-900">Orders</h2>
@@ -143,9 +199,8 @@ const OrdersPage = () => {
         </div>
       </div>
 
-      {/* ── Search + Filters ── */}
+      {/* Search + Filters */}
       <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-4 space-y-3">
-        {/* Search row */}
         <form onSubmit={handleSearch} className="flex gap-2">
           <div className="relative flex-1">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -157,42 +212,34 @@ const OrdersPage = () => {
               className="w-full pl-9 pr-4 h-9 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
             />
           </div>
-          <button
-            type="submit"
-            className="h-9 px-4 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
-          >
+          <button type="submit" className="h-9 px-4 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors">
             Search
           </button>
           {hasFilters && (
-            <button
-              type="button"
-              onClick={() => { setSearch(''); setStatusFilter(''); setPaymentFilter(''); setPage(1); }}
-              className="h-9 px-3 text-gray-400 hover:text-gray-600 text-sm rounded-xl hover:bg-gray-100 transition-colors flex items-center gap-1"
-            >
+            <button type="button" onClick={() => { setSearch(''); setStatusFilter(''); setPaymentFilter(''); setPage(1); }} className="h-9 px-3 text-gray-400 hover:text-gray-600 text-sm rounded-xl hover:bg-gray-100 transition-colors flex items-center gap-1">
               <ArrowPathIcon className="w-3.5 h-3.5" />
               Clear
             </button>
           )}
         </form>
 
-        {/* Status chips */}
         <div className="flex flex-wrap gap-1.5">
           <span className="text-xs text-gray-400 mr-1 self-center">Status:</span>
-          <FilterChip label="All" value="" active={!statusFilter} onClick={() => { setStatusFilter(''); setPage(1); }} />
+          <FilterChip label="All" active={!statusFilter} onClick={() => { setStatusFilter(''); setPage(1); }} />
+          <FilterChip label="Needs attention" active={statusFilter === 'needs_attention'} onClick={() => { setStatusFilter('needs_attention'); setPage(1); }} />
           {ORDER_STATUSES.map(s => (
-            <FilterChip key={s} label={s} value={s} active={statusFilter === s} onClick={() => { setStatusFilter(s); setPage(1); }} />
+            <FilterChip key={s} label={s} active={statusFilter === s} onClick={() => { setStatusFilter(s); setPage(1); }} />
           ))}
         </div>
         <div className="flex flex-wrap gap-1.5">
           <span className="text-xs text-gray-400 mr-1 self-center">Payment:</span>
-          <FilterChip label="All" value="" active={!paymentFilter} onClick={() => { setPaymentFilter(''); setPage(1); }} />
+          <FilterChip label="All" active={!paymentFilter} onClick={() => { setPaymentFilter(''); setPage(1); }} />
           {PAYMENT_STATUSES.map(s => (
-            <FilterChip key={s} label={s} value={s} active={paymentFilter === s} onClick={() => { setPaymentFilter(s); setPage(1); }} />
+            <FilterChip key={s} label={s} active={paymentFilter === s} onClick={() => { setPaymentFilter(s); setPage(1); }} />
           ))}
         </div>
       </div>
 
-      {/* ── Table ── */}
       <DataTable
         columns={columns}
         data={orders}

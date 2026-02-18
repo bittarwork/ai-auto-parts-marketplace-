@@ -220,6 +220,16 @@ const OverviewPage = () => {
           <p className="text-sm text-gray-400 mt-0.5">{todayLabel}</p>
         </div>
         <div className="flex items-center gap-2">
+          {(kpis.newOrdersToday > 0 || kpis.pendingOrdersCount > 0) && !loading && (
+            <button
+              onClick={() => navigate('/admin/orders')}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-800 text-xs font-medium hover:bg-amber-100 transition-colors"
+            >
+              {kpis.newOrdersToday > 0 && <span>{kpis.newOrdersToday} new today</span>}
+              {kpis.newOrdersToday > 0 && kpis.pendingOrdersCount > 0 && <span>•</span>}
+              {kpis.pendingOrdersCount > 0 && <span>{kpis.pendingOrdersCount} need attention</span>}
+            </button>
+          )}
           <button
             onClick={() => navigate('/admin/orders')}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"

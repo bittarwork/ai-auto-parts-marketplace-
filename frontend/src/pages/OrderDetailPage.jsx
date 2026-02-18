@@ -19,7 +19,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
-  CubeIcon
+  CubeIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckSolid } from '@heroicons/react/24/solid';
 

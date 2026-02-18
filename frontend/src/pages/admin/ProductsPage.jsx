@@ -43,8 +43,9 @@ const ProductsPage = () => {
       if (search) params.search = search;
 
       const res = await getAdminProducts(params);
-      setProducts(res.data?.products || res.products || []);
-      setPagination(res.data?.pagination || res.pagination || null);
+      // API returns { data: products[], pagination } - data is the array directly
+      setProducts(Array.isArray(res?.data) ? res.data : (res?.data?.products || res?.products || []));
+      setPagination(res?.pagination ?? res?.data?.pagination ?? null);
     } catch {
       toast.error('Failed to load products');
     } finally {
