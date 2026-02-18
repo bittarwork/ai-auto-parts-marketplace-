@@ -11,21 +11,76 @@ import {
   ShoppingBagIcon,
   ArrowRightIcon,
   CalendarDaysIcon,
-  DocumentTextIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  PackageIcon,
+  CheckCircleIcon as CheckOutline
 } from '@heroicons/react/24/outline';
 import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
   Cog6ToothIcon,
-  CubeTransparentIcon
+  TruckIcon as TruckSolid,
+  SparklesIcon
 } from '@heroicons/react/24/solid';
 
 /**
  * Orders List Page
- * Order history with filters, cards layout and clear status indicators
+ * UX-focused: clear status meanings, "what's next" hints, grouped by state
  */
+
+// Human-readable status: label + short description for quick understanding
+const STATUS_INFO = {
+  pending: {
+    label: 'Awaiting confirmation',
+    description: 'We received your order and will confirm it soon.',
+    bg: 'bg-amber-50 dark:bg-amber-900/20',
+    text: 'text-amber-800 dark:text-amber-300',
+    icon: ClockIcon,
+    border: 'border-amber-200 dark:border-amber-800'
+  },
+  confirmed: {
+    label: 'Confirmed',
+    description: 'Your order is confirmed. We are preparing it for shipment.',
+    bg: 'bg-blue-50 dark:bg-blue-900/20',
+    text: 'text-blue-800 dark:text-blue-300',
+    icon: CheckCircleIcon,
+    border: 'border-blue-200 dark:border-blue-800'
+  },
+  processing: {
+    label: 'Being prepared',
+    description: 'We are packing your items. You will receive tracking info soon.',
+    bg: 'bg-indigo-50 dark:bg-indigo-900/20',
+    text: 'text-indigo-800 dark:text-indigo-300',
+    icon: Cog6ToothIcon,
+    border: 'border-indigo-200 dark:border-indigo-800'
+  },
+  shipped: {
+    label: 'On the way',
+    description: 'Your package has been shipped. Track it in the order details.',
+    bg: 'bg-violet-50 dark:bg-violet-900/20',
+    text: 'text-violet-800 dark:text-violet-300',
+    icon: TruckSolid,
+    border: 'border-violet-200 dark:border-violet-800'
+  },
+  delivered: {
+    label: 'Delivered',
+    description: 'Your order has been delivered. We hope you enjoy it!',
+    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+    text: 'text-emerald-800 dark:text-emerald-300',
+    icon: CheckCircleIcon,
+    border: 'border-emerald-200 dark:border-emerald-800'
+  },
+  cancelled: {
+    label: 'Cancelled',
+    description: 'This order was cancelled.',
+    bg: 'bg-red-50 dark:bg-red-900/20',
+    text: 'text-red-800 dark:text-red-300',
+    icon: XCircleIcon,
+    border: 'border-red-200 dark:border-red-800'
+  }
+};
+
 export default function OrdersPage() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
@@ -66,64 +121,29 @@ export default function OrdersPage() {
     }
   };
 
-  const formatPrice = (amount, currency = 'SAR') =>
+  const formatPrice = (amount, currency = 'EUR') =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0 }).format(amount);
 
   const formatDate = (dateStr) =>
     new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
-  const getStatusConfig = (status) => {
-    const configs = {
-      pending: {
-        bg: 'bg-amber-100 dark:bg-amber-900/30',
-        text: 'text-amber-800 dark:text-amber-300',
-        icon: ClockIcon,
-        label: 'Pending'
-      },
-      confirmed: {
-        bg: 'bg-blue-100 dark:bg-blue-900/30',
-        text: 'text-blue-800 dark:text-blue-300',
-        icon: CheckCircleIcon,
-        label: 'Confirmed'
-      },
-      processing: {
-        bg: 'bg-indigo-100 dark:bg-indigo-900/30',
-        text: 'text-indigo-800 dark:text-indigo-300',
-        icon: Cog6ToothIcon,
-        label: 'Processing'
-      },
-      shipped: {
-        bg: 'bg-violet-100 dark:bg-violet-900/30',
-        text: 'text-violet-800 dark:text-violet-300',
-        icon: TruckIcon,
-        label: 'Shipped'
-      },
-      delivered: {
-        bg: 'bg-emerald-100 dark:bg-emerald-900/30',
-        text: 'text-emerald-800 dark:text-emerald-300',
-        icon: CheckCircleIcon,
-        label: 'Delivered'
-      },
-      cancelled: {
-        bg: 'bg-red-100 dark:bg-red-900/30',
-        text: 'text-red-800 dark:text-red-300',
-        icon: XCircleIcon,
-        label: 'Cancelled'
-      }
-    };
-    return configs[status] || { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-700 dark:text-gray-300', icon: DocumentTextIcon, label: status };
-  };
+  const getItemCount = (order) =>
+    order.items?.reduce((sum, i) => sum + (i.quantity || 1), 0) || 0;
 
-  const getOrderItemCount = (order) => {
-    if (!order.items) return 0;
-    return order.items.reduce((sum, i) => sum + (i.quantity || 1), 0);
-  };
+  // Group: active first (pending→shipped), then delivered, then cancelled
+  const activeStatuses = ['pending', 'confirmed', 'processing', 'shipped'];
+  const activeOrders = orders.filter(o => activeStatuses.includes(o.status));
+  const deliveredOrders = orders.filter(o => o.status === 'delivered');
+  const cancelledOrders = orders.filter(o => o.status === 'cancelled');
+  const displayOrders = statusFilter
+    ? orders
+    : [...activeOrders, ...deliveredOrders, ...cancelledOrders];
 
   if (loading && orders.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-dark-bg py-12">
         <Container>
-          <InlineLoader text="Loading orders..." />
+          <InlineLoader text="Loading your orders..." />
         </Container>
       </div>
     );
@@ -132,15 +152,21 @@ export default function OrdersPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-dark-bg py-8">
       <Container>
-        {/* Header */}
+        {/* Header with summary */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-xl bg-primary-100 dark:bg-primary-900/30">
-              <ShoppingBagIcon className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+          <div className="flex items-start gap-4">
+            <div className="p-3 rounded-2xl bg-primary-100 dark:bg-primary-900/30">
+              <ShoppingBagIcon className="w-10 h-10 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Orders</h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">Track and manage your orders</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">My Orders</h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                {orders.length === 0
+                  ? 'Track and manage your orders'
+                  : activeOrders.length > 0
+                  ? `You have ${activeOrders.length} order${activeOrders.length > 1 ? 's' : ''} in progress`
+                  : `You have ${orders.length} order${orders.length > 1 ? 's' : ''}`}
+              </p>
             </div>
           </div>
         </div>
@@ -152,56 +178,52 @@ export default function OrdersPage() {
             className="flex gap-2 flex-1 min-w-0"
           >
             <div className="relative flex-1">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search by order number..."
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all placeholder-gray-400"
+                placeholder="Search by order number (e.g. ORD-20250219-0001)"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 transition-all placeholder-gray-400"
               />
             </div>
             <button type="submit" className="px-4 py-2.5 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors">
               Search
             </button>
             {search && (
-              <button
-                type="button"
-                onClick={() => { setSearch(''); setSearchInput(''); setPagination(p => ({ ...p, page: 1 })); }}
-                className="px-3 py-2.5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-bg-secondary transition-colors"
-              >
+              <button type="button" onClick={() => { setSearch(''); setSearchInput(''); setPagination(p => ({ ...p, page: 1 })); }} className="px-3 py-2.5 text-gray-500 hover:text-gray-700 rounded-xl hover:bg-gray-100 transition-colors">
                 Clear
               </button>
             )}
           </form>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Filter:</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Show:</span>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
-              className="border border-gray-300 dark:border-dark-border rounded-xl px-4 py-2.5 bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              className="border border-gray-300 dark:border-dark-border rounded-xl px-4 py-2.5 bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500"
             >
-              <option value="">All Orders</option>
-              <option value="pending">Pending</option>
+              <option value="">All orders</option>
+              <option value="pending">Awaiting confirmation</option>
               <option value="confirmed">Confirmed</option>
-              <option value="processing">Processing</option>
-              <option value="shipped">Shipped</option>
+              <option value="processing">Being prepared</option>
+              <option value="shipped">On the way</option>
               <option value="delivered">Delivered</option>
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
         </div>
 
-        {orders.length === 0 ? (
+        {displayOrders.length === 0 ? (
           <Card className="text-center py-16 overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-primary-50/50 to-transparent dark:from-primary-900/10 dark:to-transparent" />
             <div className="relative">
               <div className="inline-flex p-4 rounded-2xl bg-gray-100 dark:bg-dark-bg-secondary mb-6">
-                <TruckIcon className="w-16 h-16 text-gray-400 dark:text-gray-500" />
+                <PackageIcon className="w-16 h-16 text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Orders Yet</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-sm mx-auto">
-                When you place an order, it will appear here. You can track its status and view details.
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No orders yet</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto leading-relaxed">
+                When you place an order, it will appear here. You can see its status at every step: from confirmation to delivery.
               </p>
               <Link to="/products">
                 <Button variant="primary" size="lg">Browse Products</Button>
@@ -210,46 +232,50 @@ export default function OrdersPage() {
           </Card>
         ) : (
           <>
-            {/* Orders Grid - Card layout */}
             <div className="space-y-4">
-              {orders.map((order) => {
-                const config = getStatusConfig(order.status);
-                const StatusIcon = config.icon;
-                const itemCount = getOrderItemCount(order);
+              {displayOrders.map((order) => {
+                const info = STATUS_INFO[order.status] || STATUS_INFO.pending;
+                const StatusIcon = info.icon;
+                const itemCount = getItemCount(order);
+
                 return (
-                  <Card
-                    key={order._id}
-                    hover
-                    className="overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary-200 dark:hover:border-primary-800"
-                  >
+                  <Card key={order._id} hover className="overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary-200 dark:hover:border-primary-800">
                     <Link to={`/orders/${order._id}`} className="block">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        {/* Left: Order info */}
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 flex-wrap">
-                            <span className="font-mono font-semibold text-gray-900 dark:text-white text-lg">
-                              {order.orderNumber || order._id?.slice(-8)}
+                          {/* Order number + status badge */}
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="font-mono font-bold text-gray-900 dark:text-white text-lg">
+                              Order {order.orderNumber || order._id?.slice(-8)}
                             </span>
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${config.bg} ${config.text}`}>
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium border ${info.bg} ${info.text} ${info.border}`}>
                               <StatusIcon className="w-4 h-4" />
-                              {config.label}
+                              {info.label}
                             </span>
                           </div>
-                          <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                          {/* Status description - helps user understand what's happening */}
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 max-w-xl">
+                            {info.description}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-500">
                             <span className="flex items-center gap-1.5">
                               <CalendarDaysIcon className="w-4 h-4" />
-                              {formatDate(order.createdAt)}
+                              Ordered {formatDate(order.createdAt)}
                             </span>
                             <span className="flex items-center gap-1.5">
-                              <CubeTransparentIcon className="w-4 h-4" />
                               {itemCount} {itemCount === 1 ? 'item' : 'items'}
                             </span>
+                            {order.estimatedDelivery && order.status !== 'cancelled' && (
+                              <span className="flex items-center gap-1.5 text-primary-600 dark:text-primary-400 font-medium">
+                                <CheckOutline className="w-4 h-4" />
+                                Est. delivery {formatDate(order.estimatedDelivery)}
+                              </span>
+                            )}
                           </div>
                         </div>
-                        {/* Right: Total + CTA */}
-                        <div className="flex items-center gap-4 sm:gap-6">
+                        <div className="flex items-center gap-4 sm:gap-6 flex-shrink-0">
                           <span className="text-xl font-bold text-primary-600 dark:text-primary-400">
-                            {formatPrice(order.total, order.currency || 'SAR')}
+                            {formatPrice(order.total, order.currency || 'EUR')}
                           </span>
                           <span className="inline-flex items-center gap-2 text-primary-600 dark:text-primary-400 font-medium group">
                             View details
@@ -263,7 +289,6 @@ export default function OrdersPage() {
               })}
             </div>
 
-            {/* Pagination */}
             {pagination.pages > 1 && (
               <div className="mt-8 flex justify-center items-center gap-4">
                 <Button

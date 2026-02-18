@@ -20,25 +20,68 @@ import {
   XCircleIcon,
   ClockIcon,
   CubeIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  InformationCircleIcon
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckSolid } from '@heroicons/react/24/solid';
 
 /**
  * Order Detail Page
- * Full order view with tracking timeline and shipping/tracking info
+ * UX-focused: "What's happening now", clear status explanations, simple timeline
  */
-const ORDER_STATUS_FLOW = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
 
-function OrderTrackingStepper({ order }) {
+// Current status → human sentence + next step
+const STATUS_MSG = {
+  pending: {
+    headline: 'We received your order',
+    sub: 'Our team will confirm it shortly. You will get an email when it is confirmed.',
+    next: 'What happens next? We will review and confirm your order.'
+  },
+  confirmed: {
+    headline: 'Your order is confirmed',
+    sub: 'We are preparing your items for shipment.',
+    next: 'What happens next? We will pack your order and add tracking info when it ships.'
+  },
+  processing: {
+    headline: 'We are packing your order',
+    sub: 'Your items are being prepared. Tracking will be available once shipped.',
+    next: 'What happens next? Your package will be handed to the carrier soon.'
+  },
+  shipped: {
+    headline: 'Your order is on the way',
+    sub: 'Track your package below to see real-time updates.',
+    next: 'What happens next? The carrier will deliver to your address.'
+  },
+  delivered: {
+    headline: 'Your order has been delivered',
+    sub: 'We hope you enjoy your purchase!',
+    next: null
+  },
+  cancelled: {
+    headline: 'This order was cancelled',
+    sub: 'If you have questions, please contact support.',
+    next: null
+  }
+};
+
+const ORDER_STEPS = [
+  { key: 'pending', label: 'Order placed', short: 'Placed' },
+  { key: 'confirmed', label: 'Confirmed', short: 'Confirmed' },
+  { key: 'processing', label: 'Being prepared', short: 'Preparing' },
+  { key: 'shipped', label: 'Shipped', short: 'Shipped' },
+  { key: 'delivered', label: 'Delivered', short: 'Delivered' }
+];
+
+function OrderProgressStepper({ order }) {
   const status = order?.status || 'pending';
   const isCancelled = status === 'cancelled';
-  const currentIndex = ORDER_STATUS_FLOW.indexOf(status);
+  const currentIdx = ORDER_STEPS.findIndex(s => s.key === status);
+  const idx = currentIdx < 0 ? 0 : currentIdx;
 
   if (isCancelled) {
     return (
-      <div className="flex items-center gap-2 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-        <XCircleIcon className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+      <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+        <XCircleIcon className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" />
         <span className="text-red-700 dark:text-red-300 font-medium">This order was cancelled</span>
       </div>
     );
@@ -46,33 +89,26 @@ function OrderTrackingStepper({ order }) {
 
   return (
     <div className="relative">
-      {/* Progress line */}
       <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200 dark:bg-dark-border hidden sm:block" />
       <div
         className="absolute top-5 left-0 h-0.5 bg-primary-500 dark:bg-primary-400 hidden sm:block transition-all duration-500"
-        style={{ width: `${(currentIndex / (ORDER_STATUS_FLOW.length - 1)) * 100}%` }}
+        style={{ width: `${(idx / (ORDER_STEPS.length - 1)) * 100}%` }}
       />
       <div className="flex justify-between relative">
-        {ORDER_STATUS_FLOW.map((s, i) => {
-          const isActive = i <= currentIndex;
-          const isCurrent = i === currentIndex;
+        {ORDER_STEPS.map((step, i) => {
+          const isActive = i <= idx;
+          const isCurrent = i === idx;
           return (
-            <div key={s} className="flex flex-col items-center flex-1">
+            <div key={step.key} className="flex flex-col items-center flex-1">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center z-10 transition-all ${
-                  isActive
-                    ? 'bg-primary-600 text-white dark:bg-primary-500'
-                    : 'bg-gray-200 dark:bg-dark-bg-secondary text-gray-400'
+                  isActive ? 'bg-primary-600 text-white dark:bg-primary-500' : 'bg-gray-200 dark:bg-dark-bg-secondary text-gray-400'
                 } ${isCurrent ? 'ring-4 ring-primary-200 dark:ring-primary-800' : ''}`}
               >
-                {isActive ? <CheckSolid className="w-5 h-5" /> : <span className="text-sm font-medium">{i + 1}</span>}
+                {isActive ? <CheckSolid className="w-5 h-5" /> : <span className="text-xs font-medium">{i + 1}</span>}
               </div>
-              <span
-                className={`mt-2 text-xs sm:text-sm font-medium text-center capitalize ${
-                  isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'
-                }`}
-              >
-                {s}
+              <span className={`mt-2 text-xs sm:text-sm font-medium text-center ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`}>
+                {step.short}
               </span>
             </div>
           );
@@ -102,12 +138,9 @@ export default function OrderDetailPage() {
     setLoading(true);
     try {
       const response = await orderService.getOrderById(id);
-      if (response.success && response.data) {
-        setOrder(response.data);
-      } else {
-        setOrder(null);
-      }
-    } catch (err) {
+      if (response.success && response.data) setOrder(response.data);
+      else setOrder(null);
+    } catch {
       toast.error('Failed to load order');
       setOrder(null);
     } finally {
@@ -123,9 +156,7 @@ export default function OrderDetailPage() {
         setShowCancelModal(false);
         toast.success('Order cancelled');
         await loadOrder();
-      } else {
-        toast.error(response.message || 'Failed to cancel order');
-      }
+      } else toast.error(response.message || 'Failed to cancel order');
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to cancel order');
     } finally {
@@ -133,17 +164,16 @@ export default function OrderDetailPage() {
     }
   };
 
-  const copyTrackingNumber = () => {
-    const tn = order?.trackingNumber;
-    if (!tn) return;
-    navigator.clipboard.writeText(tn);
+  const copyTracking = () => {
+    if (!order?.trackingNumber) return;
+    navigator.clipboard.writeText(order.trackingNumber);
     toast.success('Tracking number copied');
   };
 
-  const getTrackingUrl = (carrier, trackingNumber) => {
-    if (!carrier || !trackingNumber) return null;
+  const getTrackingUrl = (carrier, tn) => {
+    if (!carrier || !tn) return null;
     const c = carrier.toLowerCase();
-    const num = encodeURIComponent(trackingNumber);
+    const num = encodeURIComponent(tn);
     if (c.includes('dhl')) return `https://www.dhl.com/en/express/tracking.html?AWB=${num}`;
     if (c.includes('fedex')) return `https://www.fedex.com/fedextrack/?trknbr=${num}`;
     if (c.includes('ups')) return `https://www.ups.com/track?tracknum=${num}`;
@@ -160,10 +190,7 @@ export default function OrderDetailPage() {
   const formatDateTime = (dateStr) =>
     dateStr ? new Date(dateStr).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
 
-  const getPaymentMethodLabel = (m) => {
-    const map = { card: 'Card', cash_on_delivery: 'Cash on Delivery', bank_transfer: 'Bank Transfer' };
-    return map[m] || m;
-  };
+  const getPaymentLabel = (m) => ({ card: 'Card', cash_on_delivery: 'Cash on Delivery', bank_transfer: 'Bank Transfer' }[m] || m);
 
   const canCancel = order && !['shipped', 'delivered', 'cancelled'].includes(order.status);
 
@@ -171,7 +198,7 @@ export default function OrderDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-dark-bg py-12">
         <Container>
-          <InlineLoader text="Loading order..." />
+          <InlineLoader text="Loading order details..." />
         </Container>
       </div>
     );
@@ -183,10 +210,10 @@ export default function OrderDetailPage() {
         <Container>
           <Card className="text-center py-16">
             <XCircleIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Order Not Found</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Order not found</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">This order may have been removed or the link is invalid.</p>
             <Link to="/orders">
-              <Button variant="primary" leftIcon={<ArrowLeftIcon className="w-5 h-5" />}>Back to Orders</Button>
+              <Button variant="primary" leftIcon={<ArrowLeftIcon className="w-5 h-5" />}>Back to orders</Button>
             </Link>
           </Card>
         </Container>
@@ -196,65 +223,64 @@ export default function OrderDetailPage() {
 
   const addr = order.shippingAddress || {};
   const trackingUrl = getTrackingUrl(order.shippingCarrier, order.trackingNumber);
+  const msg = STATUS_MSG[order.status] || STATUS_MSG.pending;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-dark-bg py-8">
       <Container>
-        <Link to="/orders" className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 mb-6 transition-colors">
-          <ArrowLeftIcon className="w-5 h-5" />
-          Back to Orders
+        <Link to="/orders" className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 mb-6 transition-colors text-sm font-medium">
+          <ArrowLeftIcon className="w-4 h-4" />
+          Back to my orders
         </Link>
 
-        {/* Header */}
+        {/* Hero: What's happening now */}
         <div className="mb-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
+              <p className="text-sm font-medium text-primary-600 dark:text-primary-400 mb-1">Order {order.orderNumber}</p>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                Order {order.orderNumber}
+                {msg.headline}
               </h1>
-              <div className="flex flex-wrap items-center gap-3 mt-2 text-gray-600 dark:text-gray-400">
-                <span className="flex items-center gap-1.5">
-                  <CalendarIcon className="w-4 h-4" />
-                  Placed on {formatDate(order.createdAt)}
-                </span>
+              <p className="text-gray-600 dark:text-gray-400 mt-2 max-w-xl">
+                {msg.sub}
+              </p>
+              {msg.next && (
+                <div className="mt-3 flex items-start gap-2 p-3 rounded-xl bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
+                  <InformationCircleIcon className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-primary-800 dark:text-primary-200">{msg.next}</p>
+                </div>
+              )}
+              <div className="flex items-center gap-3 mt-3 text-gray-500 dark:text-gray-400 text-sm">
+                <span>Ordered on {formatDate(order.createdAt)}</span>
               </div>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
-              <span className={`px-4 py-2 rounded-xl font-medium capitalize ${
-                order.status === 'delivered' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' :
-                order.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
-                order.status === 'shipped' ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' :
-                'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
-              }`}>
-                {order.status}
-              </span>
               <Link to="/customer-service">
                 <Button variant="outline" leftIcon={<ChatBubbleLeftRightIcon className="w-4 h-4" />}>
-                  Contact Support
+                  Contact support
                 </Button>
               </Link>
               {canCancel && (
-                <Button variant="outline" onClick={() => setShowCancelModal(true)}>
-                  Cancel Order
+                <Button variant="outline" onClick={() => setShowCancelModal(true)} className="text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20">
+                  Cancel order
                 </Button>
               )}
             </div>
           </div>
         </div>
 
-        {/* Order Tracking Stepper */}
+        {/* Progress stepper */}
         <Card className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
             <TruckIcon className="w-5 h-5 text-primary-600" />
-            Order Progress
+            Where is my order?
           </h2>
-          <OrderTrackingStepper order={order} />
-          {/* Estimated Delivery - show even before tracking */}
+          <OrderProgressStepper order={order} />
           {order.estimatedDelivery && order.status !== 'cancelled' && (
-            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-dark-border flex items-center gap-3">
-              <CalendarIcon className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0" />
+            <div className="mt-5 pt-5 border-t border-gray-100 dark:border-dark-border flex items-center gap-3">
+              <CalendarIcon className="w-5 h-5 text-primary-600 flex-shrink-0" />
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Estimated Delivery</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Expected delivery</p>
                 <p className="font-semibold text-gray-900 dark:text-white">{formatDate(order.estimatedDelivery)}</p>
               </div>
             </div>
@@ -262,43 +288,38 @@ export default function OrderDetailPage() {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Tracking Info - use Order model fields */}
-            {(order.trackingNumber || order.shippingCarrier) && (
-              <Card>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            {/* Tracking - when available */}
+            {(order.trackingNumber || order.shippingCarrier) && order.status !== 'cancelled' && (
+              <Card className="border-2 border-primary-200 dark:border-primary-800 bg-primary-50/30 dark:bg-primary-900/10">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   <TruckIcon className="w-5 h-5 text-primary-600" />
-                  Tracking
+                  Track your shipment
                 </h2>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {order.shippingCarrier && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-500 dark:text-gray-400">Carrier</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{order.shippingCarrier}</span>
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Carrier</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{order.shippingCarrier}</p>
                     </div>
                   )}
                   {order.trackingNumber && (
-                    <div className="flex justify-between items-center gap-4 flex-wrap">
-                      <span className="text-gray-500 dark:text-gray-400">Tracking Number</span>
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Tracking number</p>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-dark-bg-secondary px-3 py-1 rounded-lg">
+                        <code className="px-3 py-2 bg-white dark:bg-dark-bg-secondary rounded-xl font-mono font-medium text-gray-900 dark:text-white border border-gray-200 dark:border-dark-border">
                           {order.trackingNumber}
-                        </span>
-                        <button
-                          onClick={copyTrackingNumber}
-                          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-bg-secondary transition-colors"
-                          title="Copy"
-                        >
-                          <ClipboardDocumentIcon className="w-4 h-4 text-gray-500" />
+                        </code>
+                        <button onClick={copyTracking} className="p-2 rounded-xl hover:bg-white dark:hover:bg-dark-bg-secondary transition-colors" title="Copy">
+                          <ClipboardDocumentIcon className="w-5 h-5 text-gray-500" />
                         </button>
                       </div>
                     </div>
                   )}
                   {order.estimatedDelivery && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500 dark:text-gray-400">Estimated Delivery</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{formatDate(order.estimatedDelivery)}</span>
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Estimated delivery</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{formatDate(order.estimatedDelivery)}</p>
                     </div>
                   )}
                   {trackingUrl && (
@@ -306,21 +327,21 @@ export default function OrderDetailPage() {
                       href={trackingUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 mt-3 text-primary-600 dark:text-primary-400 hover:underline font-medium"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors text-sm"
                     >
                       <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                      Track shipment online
+                      Track on carrier website
                     </a>
                   )}
                 </div>
               </Card>
             )}
 
-            {/* Order Items */}
+            {/* Order items */}
             <Card>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <CubeIcon className="w-5 h-5 text-primary-600" />
-                Order Items
+                What you ordered
               </h2>
               <div className="space-y-4">
                 {order.items?.map((item) => {
@@ -333,19 +354,14 @@ export default function OrderDetailPage() {
                   return (
                     <div key={item._id} className="flex gap-4 pb-4 border-b border-gray-100 dark:border-dark-border last:border-0 last:pb-0">
                       <div className="w-20 h-20 bg-gray-100 dark:bg-dark-bg-secondary rounded-xl overflow-hidden flex-shrink-0">
-                        <img
-                          src={imageUrl}
-                          alt={name}
-                          className="w-full h-full object-cover"
-                          onError={handleImageError}
-                        />
+                        <img src={imageUrl} alt={name} className="w-full h-full object-cover" onError={handleImageError} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <Link to={`/products/${product._id || item.product}`} className="font-medium text-gray-900 dark:text-white hover:text-primary-600 line-clamp-2">
                           {name}
                         </Link>
                         {partNumber && <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">{partNumber}</p>}
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Qty: {item.quantity}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Quantity: {item.quantity}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-gray-900 dark:text-white">{formatPrice(item.price * item.quantity)}</p>
@@ -357,12 +373,12 @@ export default function OrderDetailPage() {
               </div>
             </Card>
 
-            {/* Status History */}
+            {/* Status history - optional timeline */}
             {order.statusHistory && order.statusHistory.length > 0 && (
               <Card>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   <ClockIcon className="w-5 h-5 text-primary-600" />
-                  Status History
+                  Activity
                 </h2>
                 <div className="space-y-3">
                   {[...order.statusHistory].reverse().map((h, i) => (
@@ -371,7 +387,7 @@ export default function OrderDetailPage() {
                       <div>
                         <span className="font-medium text-gray-900 dark:text-white capitalize">{h.status}</span>
                         {h.note && <span className="text-gray-500"> — {h.note}</span>}
-                        <p className="text-gray-500 dark:text-gray-400">{formatDateTime(h.date)}</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">{formatDateTime(h.date)}</p>
                       </div>
                     </div>
                   ))}
@@ -383,9 +399,9 @@ export default function OrderDetailPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             <Card>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <MapPinIcon className="w-5 h-5 text-primary-600" />
-                Shipping Address
+                Delivery address
               </h2>
               <div className="text-gray-600 dark:text-gray-400 text-sm space-y-1">
                 {addr.name && <p className="font-medium text-gray-900 dark:text-white">{addr.name}</p>}
@@ -397,14 +413,14 @@ export default function OrderDetailPage() {
             </Card>
 
             <Card>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <CreditCardIcon className="w-5 h-5 text-primary-600" />
-                Payment & Summary
+                Payment & total
               </h2>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500 dark:text-gray-400">Payment</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{getPaymentMethodLabel(order.paymentMethod)}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{getPaymentLabel(order.paymentMethod)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500 dark:text-gray-400">Status</span>
@@ -437,9 +453,9 @@ export default function OrderDetailPage() {
         open={showCancelModal}
         onClose={() => setShowCancelModal(false)}
         onConfirm={handleCancel}
-        title="Cancel Order"
+        title="Cancel order"
         message="Are you sure you want to cancel this order? This action cannot be undone."
-        confirmLabel="Yes, Cancel Order"
+        confirmLabel="Yes, cancel order"
         variant="danger"
         loading={cancelling}
       />
