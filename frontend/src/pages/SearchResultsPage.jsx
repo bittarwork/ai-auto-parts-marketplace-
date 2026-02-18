@@ -198,6 +198,23 @@ export default function SearchResultsPage() {
               </div>
             )}
             
+            {/* Relaxed search notice — shown when AI broadened the query to find results */}
+            {results.searchMetadata?.searchStrategy && 
+             results.searchMetadata.searchStrategy !== 'strict' &&
+             results.searchMetadata.searchStrategy !== 'not_found' &&
+             results.products.length > 0 && (
+              <div className="mb-4 flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/40 rounded-xl px-4 py-3">
+                <SparklesIcon className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-800 dark:text-blue-300">
+                  <span className="font-semibold">No exact match found. </span>
+                  Showing broader results —
+                  {results.searchMetadata.searchStrategy === 'no_year' && ' year filter was removed.'}
+                  {results.searchMetadata.searchStrategy === 'no_model' && ' model filter was removed.'}
+                  {results.searchMetadata.searchStrategy === 'no_brand' && ' brand filter was removed.'}
+                </div>
+              </div>
+            )}
+
             {/* Results Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
               <div>
@@ -235,6 +252,7 @@ export default function SearchResultsPage() {
               showCompatibility={results.searchMetadata?.hasVehicles}
               onToggleWishlist={toggleWishlist}
               wishlistIds={wishlistIds}
+              nlpAnalysis={results.nlpAnalysis}
             />
             
             {/* Pagination */}

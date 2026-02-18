@@ -52,18 +52,15 @@ class AISearchService {
       const mongoQuery = this.buildMongoQuery(nlpResult, filters, language);
       console.log(`[AI Search] MongoDB query:`, JSON.stringify(mongoQuery));
       
-      // STEP 4: Execute search with pagination
+      // STEP 4: Execute search with progressive fallback strategy ★★★
       const skip = (page - 1) * limit;
       
-      // Use aggregation pipeline for complex queries
-      let products = await this.executeSearchQuery(mongoQuery, {
-        skip,
-        limit,
-        language,
-        includeTextScore: true
-      });
+      // Try progressively relaxed queries if no results found
+      const { products: rawProducts, usedQuery, searchStrategy } = 
+        await this.executeSearchWithFallback(nlpResult, filters, language, skip, limit);
       
-      console.log(`[AI Search] Found ${products.length} products from MongoDB`);
+      let products = rawProducts;
+      console.log(`[AI Search] Found ${products.length} products using strategy: ${searchStrategy}`);
       
       // STEP 5: Check compatibility for each product ★★
       if (userVehicles.length > 0) {
@@ -81,13 +78,13 @@ class AISearchService {
       // STEP 7: Sort results according to user preference
       products = this.sortResults(products, sortBy);
       
-      // STEP 8: Get total count for pagination
-      const total = await Product.countDocuments(mongoQuery);
+      // STEP 8: Get total count using the same strategy query
+      const total = await Product.countDocuments(usedQuery);
       
       const searchTime = Date.now() - searchStartTime;
       console.log(`[AI Search] Search completed in ${searchTime}ms`);
       
-      // STEP 9: Return comprehensive results
+      // STEP 9: Return comprehensive results with smart not-found info
       return {
         products,
         pagination: {
@@ -105,7 +102,16 @@ class AISearchService {
           resultCount: products.length,
           totalMatches: total,
           language,
-          hasVehicles: userVehicles.length > 0
+          hasVehicles: userVehicles.length > 0,
+          searchStrategy,
+          // Provide structured not-found context when zero results
+          notFound: total === 0 ? {
+            identifiedPart: nlpResult.partType,
+            identifiedBrand: nlpResult.brand,
+            identifiedModel: nlpResult.model,
+            identifiedYear: nlpResult.year,
+            confidence: nlpResult.confidence
+          } : null
         }
       };
       
@@ -210,6 +216,60 @@ class AISearchService {
     return query;
   }
   
+  /**
+   * ★★★ PROGRESSIVE FALLBACK SEARCH ★★★
+   * 
+   * Tries up to 4 strategies from strict to relaxed:
+   *  1. Full match: text + brand + model + year
+   *  2. No year:    text + brand + model
+   *  3. No model:   text + brand only
+   *  4. No brand:   text (part type) only
+   * 
+   * Returns the first strategy that yields results,
+   * along with which strategy was used and the query.
+   */
+  async executeSearchWithFallback(nlpResult, filters, language, skip, limit) {
+    // Strategy 1: strict full match (all extracted entities)
+    const strictQuery = this.buildMongoQuery(nlpResult, filters, language);
+    const strictProducts = await this.executeSearchQuery(strictQuery, { skip, limit, language, includeTextScore: true });
+    if (strictProducts.length > 0) {
+      return { products: strictProducts, usedQuery: strictQuery, searchStrategy: 'strict' };
+    }
+
+    // Strategy 2: drop year constraint
+    if (nlpResult.year) {
+      const noYearNlp = { ...nlpResult, year: null };
+      const noYearQuery = this.buildMongoQuery(noYearNlp, filters, language);
+      const noYearProducts = await this.executeSearchQuery(noYearQuery, { skip, limit, language, includeTextScore: true });
+      if (noYearProducts.length > 0) {
+        return { products: noYearProducts, usedQuery: noYearQuery, searchStrategy: 'no_year' };
+      }
+    }
+
+    // Strategy 3: drop model constraint (keep brand + part type)
+    if (nlpResult.model) {
+      const noModelNlp = { ...nlpResult, model: null, year: null };
+      const noModelQuery = this.buildMongoQuery(noModelNlp, filters, language);
+      const noModelProducts = await this.executeSearchQuery(noModelQuery, { skip, limit, language, includeTextScore: true });
+      if (noModelProducts.length > 0) {
+        return { products: noModelProducts, usedQuery: noModelQuery, searchStrategy: 'no_model' };
+      }
+    }
+
+    // Strategy 4: drop brand constraint (part type text search only)
+    if (nlpResult.brand) {
+      const noBrandNlp = { ...nlpResult, brand: null, model: null, year: null };
+      const noBrandQuery = this.buildMongoQuery(noBrandNlp, filters, language);
+      const noBrandProducts = await this.executeSearchQuery(noBrandQuery, { skip, limit, language, includeTextScore: true });
+      if (noBrandProducts.length > 0) {
+        return { products: noBrandProducts, usedQuery: noBrandQuery, searchStrategy: 'no_brand' };
+      }
+    }
+
+    // No results found at any level — return empty with the strict query for count
+    return { products: [], usedQuery: strictQuery, searchStrategy: 'not_found' };
+  }
+
   /**
    * Execute search query with aggregation pipeline
    */

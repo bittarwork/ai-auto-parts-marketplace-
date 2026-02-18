@@ -45,7 +45,11 @@ class ChatbotService {
       }
       
       // Add product linking instructions to system prompt
-      messages[0].content += `\n\nIMPORTANT: When you identify or recommend specific auto parts, mention them clearly by name and type so the system can link them. For example: "I recommend the Oil Filter for Chery Tiggo" or "You might need Brake Pads for your vehicle."`;
+      messages[0].content += `\n\nIMPORTANT: 
+- When you identify or recommend specific auto parts, mention them clearly by name and type so the system can link them. For example: "I recommend the Oil Filter for Chery Tiggo" or "You might need Brake Pads for your vehicle."
+- You CAN provide direct product links. The system automatically attaches clickable product cards with links below your message whenever you mention a part. Always inform the user that direct product links will appear below your response so they can click and view the product immediately.
+- NEVER say you cannot provide links. Instead, say something like: "Here are the recommended parts — you will find direct links to the products below this message."
+- If the user asks for a link or a URL, confirm that product links are shown directly in the chat below your reply.`;
       
       // Add conversation history (last 5 messages)
       chatHistory.slice(-5).forEach(msg => {
