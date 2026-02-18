@@ -204,7 +204,6 @@ export default function HomePage() {
             <ProductGrid
               products={trendingProducts}
               columns={4}
-              onAddToCart={(product) => console.log('Add to cart:', product)}
             />
           </Container>
         </section>
@@ -231,7 +230,6 @@ export default function HomePage() {
             <ProductGrid
               products={popularProducts}
               columns={4}
-              onAddToCart={(product) => console.log('Add to cart:', product)}
             />
           </Container>
         </section>
