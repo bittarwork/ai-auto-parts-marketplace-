@@ -488,6 +488,39 @@ exports.getAllOrders = async (req, res) => {
 };
 
 /**
+ * Get quick order stats for admin dashboard (pending, new today, etc.)
+ * GET /api/orders/admin/quick-stats
+ * @access Private (Admin)
+ */
+exports.getOrderQuickStats = async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const [pending, confirmed, processing, newToday] = await Promise.all([
+      Order.countDocuments({ status: 'pending' }),
+      Order.countDocuments({ status: 'confirmed' }),
+      Order.countDocuments({ status: 'processing' }),
+      Order.countDocuments({ createdAt: { $gte: startOfToday } })
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        pending,
+        confirmed,
+        processing,
+        newToday,
+        needsAttention: pending + confirmed + processing
+      }
+    });
+  } catch (error) {
+    console.error('[Order Controller] getOrderQuickStats error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching stats' });
+  }
+};
+
+/**
  * Get order statistics (Admin only)
  * GET /api/orders/admin/stats
  * @access Private (Admin)

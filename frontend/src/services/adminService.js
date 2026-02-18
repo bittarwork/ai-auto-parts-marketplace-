@@ -30,6 +30,7 @@ export const updateSupplierStatus = (id, isActive) =>
 // ORDERS
 // ============================================================
 export const getAdminOrders = (params = {}) => api.get('/admin/orders', { params });
+export const getAdminOrderQuickStats = () => api.get('/admin/orders/quick-stats');
 export const getAdminOrderStats = () => api.get('/admin/orders/stats');
 export const getAdminOrderById = (id) => api.get(`/admin/orders/${id}`);
 export const updateOrderStatus = (id, data) => api.put(`/orders/${id}/status`, data);

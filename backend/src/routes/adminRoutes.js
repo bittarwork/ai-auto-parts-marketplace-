@@ -58,6 +58,7 @@ router.get('/ai/stats', adminController.getAIStats);
 // ORDERS (extended admin routes)
 // ============================================================
 router.get('/orders', orderController.getAllOrders);
+router.get('/orders/quick-stats', orderController.getOrderQuickStats);
 router.get('/orders/stats', orderController.getOrderStats);
 router.get('/orders/:id', adminController.getOrderDetails);
 router.put('/orders/:id', adminController.updateOrderDetails);

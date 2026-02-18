@@ -142,7 +142,9 @@ exports.getDashboard = async (req, res) => {
           totalOrders,
           totalUsers,
           totalProducts,
-          newUsersToday
+          newUsersToday,
+          newOrdersToday,
+          pendingOrdersCount
         },
         recentOrders,
         lowStockProducts,
