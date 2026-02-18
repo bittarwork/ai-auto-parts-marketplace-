@@ -28,6 +28,7 @@ const vehicleRoutes = require('./routes/vehicleRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Validate configuration
 try {
@@ -93,6 +94,7 @@ app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
