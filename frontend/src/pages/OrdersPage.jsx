@@ -12,7 +12,7 @@ import {
   ArrowRightIcon,
   CalendarDaysIcon,
   MagnifyingGlassIcon,
-  PackageIcon,
+  CubeIcon,
   CheckCircleIcon as CheckOutline
 } from '@heroicons/react/24/outline';
 import {
@@ -219,7 +219,7 @@ export default function OrdersPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-primary-50/50 to-transparent dark:from-primary-900/10 dark:to-transparent" />
             <div className="relative">
               <div className="inline-flex p-4 rounded-2xl bg-gray-100 dark:bg-dark-bg-secondary mb-6">
-                <PackageIcon className="w-16 h-16 text-gray-400 dark:text-gray-500" />
+                <CubeIcon className="w-16 h-16 text-gray-400 dark:text-gray-500" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No orders yet</h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto leading-relaxed">
