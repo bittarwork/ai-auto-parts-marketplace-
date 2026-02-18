@@ -55,6 +55,12 @@ const vehicleSchema = new mongoose.Schema({
     default: false
     // Mark one vehicle as primary for quick compatibility checks
   },
+
+  isActive: {
+    type: Boolean,
+    default: true
+    // Soft delete: false when vehicle is deleted
+  },
   
   mileage: {
     type: Number,

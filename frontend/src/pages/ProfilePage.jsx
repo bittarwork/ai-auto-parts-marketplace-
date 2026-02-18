@@ -3,7 +3,7 @@ import Container from '../components/common/Container';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
-import Alert from '../components/common/Alert';
+import toast from 'react-hot-toast';
 import ConfirmModal from '../components/common/ConfirmModal';
 import AddressMap from '../components/common/AddressMap';
 import AddressMapPicker from '../components/common/AddressMapPicker';
@@ -63,18 +63,15 @@ export default function ProfilePage() {
   // Basic profile form
   const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '' });
   const [profileSaving, setProfileSaving] = useState(false);
-  const [profileAlert, setProfileAlert] = useState(null);
   const [profileErrors, setProfileErrors] = useState({});
 
   // Change password form
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [pwSaving, setPwSaving] = useState(false);
-  const [pwAlert, setPwAlert] = useState(null);
   const [pwErrors, setPwErrors] = useState({});
 
   // Addresses
   const [addresses, setAddresses] = useState([]);
-  const [addrAlert, setAddrAlert] = useState(null);
   const [showAddrForm, setShowAddrForm] = useState(false);
   const [editingAddrId, setEditingAddrId] = useState(null);
   const [addrForm, setAddrForm] = useState(EMPTY_ADDRESS);
@@ -97,7 +94,7 @@ export default function ProfilePage() {
         setAddresses(res.data.addresses || []);
       }
     } catch {
-      setProfileAlert({ type: 'error', message: 'Failed to load profile' });
+      toast.error('Failed to load profile');
     } finally {
       setLoading(false);
     }
@@ -122,18 +119,17 @@ export default function ProfilePage() {
     e.preventDefault();
     if (!validateProfile()) return;
     setProfileSaving(true);
-    setProfileAlert(null);
     try {
       const res = await authService.updateProfile({ name: profileForm.name, phone: profileForm.phone || undefined });
       if (res.success) {
-        setProfileAlert({ type: 'success', message: 'Profile updated successfully' });
+        toast.success('Profile updated successfully');
         setUser(res.data);
         setEditingProfile(false);
       } else {
-        setProfileAlert({ type: 'error', message: res.message || 'Update failed' });
+        toast.error(res.message || 'Update failed');
       }
     } catch (err) {
-      setProfileAlert({ type: 'error', message: err?.message || 'Failed to update profile' });
+      toast.error(err?.message || 'Failed to update profile');
     } finally {
       setProfileSaving(false);
     }
@@ -166,18 +162,17 @@ export default function ProfilePage() {
     e.preventDefault();
     if (!validatePw()) return;
     setPwSaving(true);
-    setPwAlert(null);
     try {
       const res = await authService.changePassword(pwForm.currentPassword, pwForm.newPassword);
       if (res.success) {
-        setPwAlert({ type: 'success', message: 'Password changed successfully' });
+        toast.success('Password changed successfully');
         setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
         setEditingPassword(false);
       } else {
-        setPwAlert({ type: 'error', message: res.message || 'Failed to change password' });
+        toast.error(res.message || 'Failed to change password');
       }
     } catch (err) {
-      setPwAlert({ type: 'error', message: err?.message || 'Failed to change password' });
+      toast.error(err?.message || 'Failed to change password');
     } finally {
       setPwSaving(false);
     }
@@ -249,7 +244,6 @@ export default function ProfilePage() {
     e.preventDefault();
     if (!validateAddr()) return;
     setAddrSaving(true);
-    setAddrAlert(null);
     try {
       let res;
       if (editingAddrId) {
@@ -259,13 +253,13 @@ export default function ProfilePage() {
       }
       if (res.success) {
         setAddresses(res.data);
-        setAddrAlert({ type: 'success', message: editingAddrId ? 'Address updated' : 'Address added' });
+        toast.success(editingAddrId ? 'Address updated' : 'Address added');
         setShowAddrForm(false);
       } else {
-        setAddrAlert({ type: 'error', message: res.message || 'Failed to save address' });
+        toast.error(res.message || 'Failed to save address');
       }
     } catch (err) {
-      setAddrAlert({ type: 'error', message: err?.message || 'Failed to save address' });
+      toast.error(err?.message || 'Failed to save address');
     } finally {
       setAddrSaving(false);
     }
@@ -278,10 +272,10 @@ export default function ProfilePage() {
       const res = await authService.deleteAddress(deleteAddrTarget._id);
       if (res.success) {
         setAddresses(res.data);
-        setAddrAlert({ type: 'success', message: 'Address deleted' });
+        toast.success('Address deleted');
       }
     } catch {
-      setAddrAlert({ type: 'error', message: 'Failed to delete address' });
+      toast.error('Failed to delete address');
     } finally {
       setDeletingAddr(false);
       setDeleteAddrTarget(null);
@@ -294,10 +288,10 @@ export default function ProfilePage() {
       const res = await authService.setDefaultAddress(addr._id);
       if (res.success) {
         setAddresses(res.data);
-        setAddrAlert({ type: 'success', message: 'Default address updated' });
+        toast.success('Default address updated');
       }
     } catch {
-      setAddrAlert({ type: 'error', message: 'Failed to set default address' });
+      toast.error('Failed to set default address');
     }
   };
 
@@ -416,10 +410,6 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {profileAlert && (
-                <Alert type={profileAlert.type} message={profileAlert.message} dismissible onDismiss={() => setProfileAlert(null)} className="mb-4" />
-              )}
-
               {editingProfile ? (
                 <form onSubmit={handleProfileSubmit} className="space-y-5">
                   <Input
@@ -510,10 +500,6 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {pwAlert && (
-                <Alert type={pwAlert.type} message={pwAlert.message} dismissible onDismiss={() => setPwAlert(null)} className="mb-4" />
-              )}
-
               {editingPassword ? (
                 <form onSubmit={handlePwSubmit} className="space-y-5">
                   <Input
@@ -593,10 +579,6 @@ export default function ProfilePage() {
                   Add Address
                 </Button>
               </div>
-
-              {addrAlert && (
-                <Alert type={addrAlert.type} message={addrAlert.message} dismissible onDismiss={() => setAddrAlert(null)} className="mb-4" />
-              )}
 
               {addresses.length === 0 ? (
                 <div className="text-center py-16 px-6 rounded-xl border-2 border-dashed border-gray-200 dark:border-dark-border bg-gray-50/50 dark:bg-dark-bg-tertiary/30">

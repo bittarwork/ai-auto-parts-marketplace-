@@ -3,7 +3,7 @@ import Container from '../components/common/Container';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
-import Alert from '../components/common/Alert';
+import toast from 'react-hot-toast';
 import ConfirmModal from '../components/common/ConfirmModal';
 import { InlineLoader } from '../components/common/Spinner';
 import vehicleService from '../services/vehicleService';
@@ -41,7 +41,6 @@ const EMPTY_FORM = {
 export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [alert, setAlert] = useState(null);
 
   // Form modal state
   const [showForm, setShowForm] = useState(false);
@@ -64,7 +63,7 @@ export default function VehiclesPage() {
       const res = await vehicleService.getVehicles();
       if (res.success) setVehicles(res.data || []);
     } catch {
-      setAlert({ type: 'error', message: 'Failed to load vehicles' });
+      toast.error('Failed to load vehicles');
     } finally {
       setLoading(false);
     }
@@ -119,7 +118,6 @@ export default function VehiclesPage() {
     if (!validate()) return;
 
     setSaving(true);
-    setAlert(null);
     try {
       const payload = {
         brand: formData.brand,
@@ -141,14 +139,15 @@ export default function VehiclesPage() {
       }
 
       if (res.success) {
-        setAlert({ type: 'success', message: editingId ? 'Vehicle updated' : 'Vehicle added' });
+        toast.success(editingId ? 'Vehicle updated' : 'Vehicle added');
         setShowForm(false);
         loadVehicles();
       } else {
-        setAlert({ type: 'error', message: res.message || 'Operation failed' });
+        toast.error(res.message || 'Operation failed');
       }
     } catch (err) {
-      setAlert({ type: 'error', message: err?.message || 'An error occurred' });
+      const msg = err?.errors?.[0]?.message || err?.message || 'An error occurred';
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -160,12 +159,12 @@ export default function VehiclesPage() {
     try {
       const res = await vehicleService.deleteVehicle(deleteTarget._id);
       if (res.success) {
-        setAlert({ type: 'success', message: 'Vehicle deleted' });
+        toast.success('Vehicle deleted');
         setDeleteTarget(null);
         loadVehicles();
       }
     } catch {
-      setAlert({ type: 'error', message: 'Failed to delete vehicle' });
+      toast.error('Failed to delete vehicle');
     } finally {
       setDeleting(false);
     }
@@ -176,11 +175,11 @@ export default function VehiclesPage() {
     try {
       const res = await vehicleService.setPrimary(vehicle._id);
       if (res.success) {
-        setAlert({ type: 'success', message: `${vehicle.brand} ${vehicle.model} set as primary` });
+        toast.success(`${vehicle.brand} ${vehicle.model} set as primary`);
         loadVehicles();
       }
     } catch {
-      setAlert({ type: 'error', message: 'Failed to set primary vehicle' });
+      toast.error('Failed to set primary vehicle');
     }
   };
 
@@ -207,11 +206,6 @@ export default function VehiclesPage() {
             Add Vehicle
           </Button>
         </div>
-
-        {/* Alert */}
-        {alert && (
-          <Alert type={alert.type} message={alert.message} dismissible onDismiss={() => setAlert(null)} className="mb-6" />
-        )}
 
         {/* Empty state */}
         {vehicles.length === 0 ? (
