@@ -1,0 +1,320 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Base styles */
+@layer base {
+  body {
+    @apply font-sans antialiased;
+    @apply bg-white dark:bg-dark-bg;
+    @apply text-gray-900 dark:text-dark-text;
+    @apply transition-colors duration-200;
+  }
+  
+  /* RTL-specific styles */
+  [dir="rtl"] {
+    @apply font-arabic;
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Selection colors */
+  ::selection {
+    @apply bg-primary-500 text-white;
+  }
+}
+
+/* Component styles */
+@layer components {
+  /* ============================================
+     BUTTONS
+     ============================================ */
+  
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium 
+           transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700 
+           focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600
+           shadow-sm hover:shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-700 hover:bg-gray-300 
+           focus:ring-gray-400 dark:bg-gray-700 dark:text-gray-200 
+           dark:hover:bg-gray-600;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-primary-600 text-primary-600 hover:bg-primary-50
+           focus:ring-primary-500 dark:border-primary-400 dark:text-primary-400
+           dark:hover:bg-primary-900/20;
+  }
+  
+  .btn-ghost {
+    @apply text-gray-700 hover:bg-gray-100 focus:ring-gray-300
+           dark:text-gray-300 dark:hover:bg-gray-800;
+  }
+  
+  .btn-success {
+    @apply bg-success-600 text-white hover:bg-success-700
+           focus:ring-success-500 shadow-sm hover:shadow-md;
+  }
+  
+  .btn-error {
+    @apply bg-error-600 text-white hover:bg-error-700
+           focus:ring-error-500 shadow-sm hover:shadow-md;
+  }
+  
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+  
+  .btn-lg {
+    @apply px-6 py-3 text-lg;
+  }
+  
+  /* ============================================
+     INPUTS & FORMS
+     ============================================ */
+  
+  .input {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg 
+           bg-white dark:bg-dark-bg-secondary dark:border-dark-border
+           text-gray-900 dark:text-dark-text
+           placeholder-gray-400 dark:placeholder-gray-500
+           focus:ring-2 focus:ring-primary-500 focus:border-transparent
+           transition-colors duration-200;
+  }
+  
+  .input-error {
+    @apply border-error-500 focus:ring-error-500;
+  }
+  
+  .input-success {
+    @apply border-success-500 focus:ring-success-500;
+  }
+  
+  .label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+  }
+  
+  .form-group {
+    @apply mb-4;
+  }
+  
+  .error-message {
+    @apply text-sm text-error-600 dark:text-error-400 mt-1;
+  }
+  
+  /* ============================================
+     CARDS
+     ============================================ */
+  
+  .card {
+    @apply bg-white dark:bg-dark-bg-secondary rounded-lg shadow-soft p-6
+           border border-gray-100 dark:border-dark-border
+           transition-all duration-200;
+  }
+  
+  .card-hover {
+    @apply hover:shadow-soft-lg hover:scale-[1.02] cursor-pointer;
+  }
+  
+  .card-compact {
+    @apply p-4;
+  }
+  
+  .card-title {
+    @apply text-lg font-semibold text-gray-900 dark:text-dark-text mb-2;
+  }
+  
+  .card-subtitle {
+    @apply text-sm text-gray-600 dark:text-dark-text-secondary;
+  }
+  
+  /* ============================================
+     BADGES
+     ============================================ */
+  
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .badge-primary {
+    @apply bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400;
+  }
+  
+  .badge-success {
+    @apply bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400;
+  }
+  
+  .badge-warning {
+    @apply bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400;
+  }
+  
+  .badge-error {
+    @apply bg-error-100 text-error-800 dark:bg-error-900/30 dark:text-error-400;
+  }
+  
+  .badge-secondary {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300;
+  }
+  
+  /* ============================================
+     ALERTS
+     ============================================ */
+  
+  .alert {
+    @apply p-4 rounded-lg border;
+  }
+  
+  .alert-success {
+    @apply bg-success-50 border-success-200 text-success-800
+           dark:bg-success-900/20 dark:border-success-800/30 dark:text-success-400;
+  }
+  
+  .alert-error {
+    @apply bg-error-50 border-error-200 text-error-800
+           dark:bg-error-900/20 dark:border-error-800/30 dark:text-error-400;
+  }
+  
+  .alert-warning {
+    @apply bg-warning-50 border-warning-200 text-warning-800
+           dark:bg-warning-900/20 dark:border-warning-800/30 dark:text-warning-400;
+  }
+  
+  .alert-info {
+    @apply bg-primary-50 border-primary-200 text-primary-800
+           dark:bg-primary-900/20 dark:border-primary-800/30 dark:text-primary-400;
+  }
+  
+  /* ============================================
+     CONTAINERS & LAYOUT
+     ============================================ */
+  
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .section {
+    @apply py-12 sm:py-16 lg:py-20;
+  }
+  
+  .section-title {
+    @apply text-3xl font-bold text-gray-900 dark:text-dark-text mb-8;
+  }
+  
+  /* ============================================
+     DIVIDERS
+     ============================================ */
+  
+  .divider {
+    @apply border-t border-gray-200 dark:border-dark-border;
+  }
+  
+  /* ============================================
+     LOADING & SPINNERS
+     ============================================ */
+  
+  .spinner {
+    @apply animate-spin rounded-full border-4 border-gray-200 
+           border-t-primary-600 dark:border-gray-700 dark:border-t-primary-400;
+  }
+  
+  /* ============================================
+     SHADOWS & EFFECTS
+     ============================================ */
+  
+  .glass-effect {
+    @apply backdrop-blur-md bg-white/80 dark:bg-dark-bg/80;
+  }
+  
+  /* ============================================
+     TEXT UTILITIES
+     ============================================ */
+  
+  .text-primary {
+    @apply text-gray-900 dark:text-dark-text;
+  }
+  
+  .text-secondary {
+    @apply text-gray-600 dark:text-dark-text-secondary;
+  }
+  
+  .text-tertiary {
+    @apply text-gray-500 dark:text-dark-text-tertiary;
+  }
+  
+  .link {
+    @apply text-primary-600 hover:text-primary-700 dark:text-primary-400 
+           dark:hover:text-primary-300 underline-offset-4 hover:underline;
+  }
+}
+
+/* RTL-specific utility classes */
+@layer utilities {
+  .rtl-mirror {
+    @apply [dir="rtl"]:scale-x-[-1];
+  }
+  
+  /* Custom scrollbar styles */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-dark-bg-secondary rounded-lg;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500;
+  }
+  
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    to right,
+    #f0f0f0 0%,
+    #e0e0e0 50%,
+    #f0f0f0 100%
+  );
+  background-size: 1000px 100%;
+}
+
+.dark .skeleton {
+  background: linear-gradient(
+    to right,
+    #1e293b 0%,
+    #334155 50%,
+    #1e293b 100%
+  );
+}

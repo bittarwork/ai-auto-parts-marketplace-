@@ -1,0 +1,45 @@
+{
+  "intelligentPlaceholder": "Search smartly... Example: oil filter for Chery Tiggo 2020",
+  "voiceSearch": "Voice Search",
+  "voiceSearchNotSupported": "Voice search is not supported in this browser",
+  "searching": "Searching...",
+  "noResults": "No results found",
+  "resultsFor": "Search results for: {{query}}",
+  "aiHint": "Try searching naturally, like: 'I need brake pads for Haval Jolion'",
+  "nlpAnalysis": {
+    "title": "We understood your search as:",
+    "partType": "Part Type",
+    "brand": "Brand",
+    "model": "Model",
+    "year": "Year",
+    "intent": "Intent"
+  },
+  "filters": {
+    "title": "Filters",
+    "brand": "Brand",
+    "priceRange": "Price Range",
+    "inStock": "In Stock Only",
+    "rating": "Rating",
+    "clear": "Clear Filters"
+  },
+  "sort": {
+    "relevance": "Most Relevant",
+    "priceLowHigh": "Price: Low to High",
+    "priceHighLow": "Price: High to Low",
+    "rating": "Rating",
+    "popularity": "Most Popular",
+    "newest": "Newest"
+  },
+  "suggestions": {
+    "title": "Search Suggestions",
+    "popular": "Popular Searches",
+    "recent": "Recent Searches"
+  },
+  "compatibility": {
+    "compatible": "Compatible",
+    "notCompatible": "Not Compatible",
+    "checkCompatibility": "Check Compatibility",
+    "addVehicle": "Add Your Vehicle",
+    "compatibleWith": "Compatible with {{vehicle}}"
+  }
+}

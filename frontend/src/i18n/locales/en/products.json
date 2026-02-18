@@ -1,0 +1,23 @@
+{
+  "productDetails": "Product Details",
+  "specifications": "Specifications",
+  "compatibility": "Compatibility",
+  "reviews": "Reviews",
+  "relatedProducts": "Related Products",
+  "similarProducts": "Similar Products",
+  "frequentlyBoughtTogether": "Frequently Bought Together",
+  "warranty": "Warranty",
+  "installationDifficulty": "Installation Difficulty",
+  "easy": "Easy",
+  "medium": "Medium",
+  "hard": "Hard",
+  "partNumber": "Part Number",
+  "brand": "Brand",
+  "category": "Category",
+  "writeReview": "Write a Review",
+  "rating": "Rating",
+  "addToWishlist": "Add to Wishlist",
+  "shareProduct": "Share",
+  "description": "Description",
+  "features": "Features"
+}

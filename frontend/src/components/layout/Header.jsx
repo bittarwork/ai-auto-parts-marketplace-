@@ -1,0 +1,216 @@
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import authService from '../../services/authService';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useCart } from '../../contexts/CartContext';
+import { useWishlist } from '../../contexts/WishlistContext';
+import Container from '../common/Container';
+import Button from '../common/Button';
+import {
+  Bars3Icon,
+  XMarkIcon,
+  MagnifyingGlassIcon,
+  ShoppingCartIcon,
+  UserIcon,
+  SunIcon,
+  MoonIcon,
+  HeartIcon,
+} from '@heroicons/react/24/outline';
+
+/**
+ * Main Header Component
+ * Contains navigation, search, cart, theme toggle
+ */
+export default function Header() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+  const { cartCount } = useCart();
+  const { wishlistIds } = useWishlist();
+  const isLoggedIn = !!localStorage.getItem('token');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  const navigation = [
+    { name: t('common:home'), href: '/' },
+    { name: t('common:products'), href: '/products' },
+    { name: t('common:categories'), href: '/categories' },
+    { name: t('common:aboutUs'), href: '/about' },
+  ];
+  
+  return (
+    <header className="sticky top-0 z-50 bg-white/95 dark:bg-dark-bg/95 backdrop-blur-md border-b border-gray-200 dark:border-dark-border">
+      <Container>
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xl">CA</span>
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+                {t('common:appName')}
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Smart Auto Parts
+              </p>
+            </div>
+          </Link>
+          
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            {navigation.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+              >
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+          
+          {/* Actions */}
+          <div className="flex items-center space-x-3">
+            {/* Search Icon (Mobile) */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              aria-label="Search"
+            >
+              <MagnifyingGlassIcon className="w-5 h-5" />
+            </Button>
+            
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? (
+                <SunIcon className="w-5 h-5" />
+              ) : (
+                <MoonIcon className="w-5 h-5" />
+              )}
+            </Button>
+            
+            {/* Wishlist - visible for all, login required on page */}
+            <Link
+              to="/wishlist"
+              className="hidden sm:flex relative p-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded-lg"
+            >
+              <HeartIcon className="w-5 h-5" />
+              {isLoggedIn && wishlistIds.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-error-500 text-white text-xs rounded-full min-w-[1rem] h-4 flex items-center justify-center px-1">
+                  {wishlistIds.length}
+                </span>
+              )}
+            </Link>
+            
+            {/* Cart */}
+            <Link
+              to="/cart"
+              className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded-lg flex"
+            >
+              <ShoppingCartIcon className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary-500 text-white text-xs rounded-full min-w-[1rem] h-4 flex items-center justify-center px-1">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+            
+            {/* User / Account */}
+            {isLoggedIn ? (
+              <Link
+                to="/dashboard"
+                className="hidden sm:flex p-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded-lg"
+                title="My Account"
+              >
+                <UserIcon className="w-5 h-5" />
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="hidden sm:flex p-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded-lg"
+              >
+                <UserIcon className="w-5 h-5" />
+              </Link>
+            )}
+            
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? (
+                <XMarkIcon className="w-6 h-6" />
+              ) : (
+                <Bars3Icon className="w-6 h-6" />
+              )}
+            </Button>
+          </div>
+        </div>
+      </Container>
+      
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-gray-200 dark:border-dark-border animate-slide-up">
+          <Container>
+            <div className="py-4 space-y-2">
+              {navigation.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
+              <div className="pt-2 border-t border-gray-200 dark:border-dark-border space-y-2">
+                {isLoggedIn ? (
+                  <>
+                    <Link to="/dashboard" className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                      My Dashboard
+                    </Link>
+                    <Link to="/orders" className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                      My Orders
+                    </Link>
+                    <Link to="/wishlist" className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                      Wishlist
+                    </Link>
+                    <button
+                      onClick={() => {
+                        authService.logout();
+                        setMobileMenuOpen(false);
+                        navigate('/');
+                      }}
+                      className="block w-full text-left px-4 py-2 text-error-600 dark:text-error-400 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                      {t('common:login')}
+                    </Link>
+                    <Link to="/register" className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                      {t('common:register')}
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          </Container>
+        </div>
+      )}
+    </header>
+  );
+}
