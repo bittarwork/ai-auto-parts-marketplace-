@@ -14,12 +14,17 @@ const Product = require('../models/Product');
  */
 exports.getUserOrders = async (req, res) => {
   try {
-    const { page = 1, limit = 10, status } = req.query;
+    const { page = 1, limit = 10, status, search } = req.query;
     
     const query = { customer: req.user._id };
     
     if (status) {
       query.status = status;
+    }
+    
+    // Search by order number
+    if (search && search.trim()) {
+      query.orderNumber = { $regex: search.trim(), $options: 'i' };
     }
     
     const skip = (parseInt(page) - 1) * parseInt(limit);

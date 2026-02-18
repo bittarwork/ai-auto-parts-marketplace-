@@ -31,6 +31,8 @@ exports.getDashboard = async (req, res) => {
       totalUsers,
       totalProducts,
       newUsersToday,
+      newOrdersToday,
+      pendingOrdersCount,
       recentOrders,
       lowStockProducts,
       ordersByStatus
@@ -52,6 +54,14 @@ exports.getDashboard = async (req, res) => {
 
       // New users registered today
       User.countDocuments({ createdAt: { $gte: startOfToday } }),
+
+      // New orders placed today
+      Order.countDocuments({ createdAt: { $gte: startOfToday } }),
+
+      // Orders needing attention (pending, confirmed, processing - not cancelled)
+      Order.countDocuments({
+        status: { $in: ['pending', 'confirmed', 'processing'] }
+      }),
 
       // Recent 10 orders
       Order.find()

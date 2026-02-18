@@ -57,8 +57,9 @@ const OrdersPage = () => {
       if (paymentFilter) params.paymentStatus = paymentFilter;
 
       const res = await getAdminOrders(params);
-      setOrders(res.data?.orders || res.orders || []);
-      setPagination(res.data?.pagination || res.pagination || null);
+      // Backend returns { data: orders[], pagination } - data is the array directly
+      setOrders(Array.isArray(res.data) ? res.data : (res.data?.orders || res.orders || []));
+      setPagination(res.pagination || res.data?.pagination || null);
     } catch {
       toast.error('Failed to load orders');
     } finally {
