@@ -2,6 +2,14 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+/* Leaflet map styles */
+@import 'leaflet/dist/leaflet.css';
+
+/* Fix map z-index when inside modal */
+.leaflet-container {
+  z-index: 1;
+}
+
 /* Base styles */
 @layer base {
   body {

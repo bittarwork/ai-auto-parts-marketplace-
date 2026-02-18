@@ -6,7 +6,8 @@ import { CartProvider } from './contexts/CartContext';
 import { WishlistProvider } from './contexts/WishlistContext';
 import Layout from './components/layout/Layout';
 import ChatWidget from './components/chatbot/ChatWidget';
-import Button from './components/common/Button';
+import ProtectedRoute from './components/common/ProtectedRoute';
+
 import HomePage from './pages/HomePage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
@@ -22,6 +23,8 @@ import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
+import VehiclesPage from './pages/VehiclesPage';
+import NotFoundPage from './pages/NotFoundPage';
 import CategoriesPage from './pages/CategoriesPage';
 import AboutUsPage from './pages/AboutUsPage';
 import CustomerServicePage from './pages/CustomerServicePage';
@@ -71,12 +74,13 @@ function App() {
           <Route path="/categories" element={<CategoriesPage />} />
           
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/wishlist" element={<WishlistPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/orders" element={<OrdersPage />} />
-          <Route path="/orders/:id" element={<OrderDetailPage />} />
+          <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+          <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+          <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
+          <Route path="/vehicles" element={<ProtectedRoute><VehiclesPage /></ProtectedRoute>} />
           
           <Route path="/about" element={<AboutUsPage />} />
           
@@ -91,17 +95,7 @@ function App() {
           <Route path="/shipping" element={<ShippingPolicyPage />} />
           
           {/* 404 */}
-          <Route path="*" element={
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg">
-              <div className="text-center">
-                <h1 className="text-6xl font-bold text-gray-900 dark:text-white mb-4">404</h1>
-                <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">Page not found</p>
-                <Button variant="primary" onClick={() => window.location.href = '/'}>
-                  Go Home
-                </Button>
-              </div>
-            </div>
-          } />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         
         {/* Floating Chat Widget - Always visible */}

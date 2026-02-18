@@ -8,12 +8,16 @@ import Alert from '../components/common/Alert';
 import { InlineLoader } from '../components/common/Spinner';
 import cartService from '../services/cartService';
 import orderService from '../services/orderService';
+import authService from '../services/authService';
 import { useCart } from '../contexts/CartContext';
 import {
   CheckCircleIcon,
   TruckIcon,
   CreditCardIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  MapPinIcon,
+  CheckBadgeIcon,
+  PlusIcon
 } from '@heroicons/react/24/outline';
 
 /**
@@ -30,7 +34,12 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [alert, setAlert] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
-  
+
+  // Saved addresses
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [useNewAddress, setUseNewAddress] = useState(false);
+
   const [shippingForm, setShippingForm] = useState({
     fullName: '',
     phone: '',
@@ -40,7 +49,7 @@ export default function CheckoutPage() {
     city: '',
     state: '',
     postalCode: '',
-    country: 'Saudi Arabia'
+    country: 'Syria'
   });
   
   const [paymentMethod, setPaymentMethod] = useState('cash_on_delivery');
@@ -52,30 +61,83 @@ export default function CheckoutPage() {
       navigate('/login', { state: { from: '/checkout', message: 'Login required to complete purchase' } });
       return;
     }
-    loadCart();
+    loadCheckoutData();
   }, [navigate]);
-  
-  const loadCart = async () => {
+
+  const loadCheckoutData = async () => {
     setLoading(true);
     try {
-      const response = await cartService.getCart();
-      if (response.success) {
-        if (!response.data.cart || response.data.cart.items.length === 0) {
+      const [cartRes, meRes] = await Promise.all([
+        cartService.getCart(),
+        authService.getMe()
+      ]);
+
+      if (cartRes.success) {
+        if (!cartRes.data.cart || cartRes.data.cart.items.length === 0) {
           navigate('/cart');
           return;
         }
-        setCart(response.data.cart);
-        setSummary(response.data.summary);
+        setCart(cartRes.data.cart);
+        setSummary(cartRes.data.summary);
+      }
+
+      // Load saved addresses and pre-fill from profile
+      if (meRes.success && meRes.data) {
+        const addrs = meRes.data.addresses || [];
+        setSavedAddresses(addrs);
+
+        if (addrs.length > 0) {
+          // Pre-select the default address
+          const def = addrs.find(a => a.isDefault) || addrs[0];
+          setSelectedAddressId(def._id);
+          prefillFromSavedAddress(def, meRes.data);
+        } else {
+          // No saved addresses — pre-fill basic info
+          setUseNewAddress(true);
+          setShippingForm(prev => ({
+            ...prev,
+            fullName: meRes.data.name || '',
+            phone: meRes.data.phone || '',
+            email: meRes.data.email || ''
+          }));
+        }
       }
     } catch (error) {
-      console.error('Error loading cart:', error);
-      setAlert({
-        type: 'error',
-        message: 'Failed to load cart'
-      });
+      setAlert({ type: 'error', message: 'Failed to load checkout data' });
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fill shipping form from a saved address object
+  const prefillFromSavedAddress = (addr, userData) => {
+    setShippingForm({
+      fullName: userData?.name || addr.phone || '',
+      phone: addr.phone || userData?.phone || '',
+      email: userData?.email || '',
+      addressLine1: addr.street || '',
+      addressLine2: addr.district || '',
+      city: addr.city || '',
+      state: '',
+      postalCode: addr.postalCode || '',
+      country: addr.country || 'Syria'
+    });
+  };
+
+  // When user selects a saved address
+  const handleSelectSavedAddress = (addr) => {
+    setSelectedAddressId(addr._id);
+    setUseNewAddress(false);
+    // Keep form updated in case user switches to manual
+    setShippingForm(prev => ({
+      ...prev,
+      addressLine1: addr.street || '',
+      addressLine2: addr.district || '',
+      city: addr.city || '',
+      postalCode: addr.postalCode || '',
+      country: addr.country || 'Syria',
+      phone: addr.phone || prev.phone
+    }));
   };
   
   const handleShippingChange = (e) => {
@@ -114,7 +176,15 @@ export default function CheckoutPage() {
   };
   
   const handleContinueToPayment = () => {
-    if (validateShipping()) {
+    // If a saved address is selected, only validate name/email/phone
+    if (selectedAddressId && !useNewAddress) {
+      const errs = {};
+      if (!shippingForm.fullName) errs.fullName = 'Full name is required';
+      if (!shippingForm.email) errs.email = 'Email is required';
+      if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+      setCurrentStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (validateShipping()) {
       setCurrentStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -145,9 +215,28 @@ export default function CheckoutPage() {
         return;
       }
       
+      // Build shipping address: use selected saved address or the manual form
+      let shippingAddress = shippingForm;
+      if (selectedAddressId && !useNewAddress) {
+        const saved = savedAddresses.find(a => a._id === selectedAddressId);
+        if (saved) {
+          shippingAddress = {
+            fullName: shippingForm.fullName,
+            phone: saved.phone || shippingForm.phone,
+            email: shippingForm.email,
+            addressLine1: saved.street,
+            addressLine2: saved.district || '',
+            city: saved.city,
+            state: '',
+            postalCode: saved.postalCode || '',
+            country: saved.country || 'Syria'
+          };
+        }
+      }
+
       // Create order
       const orderData = {
-        shippingAddress: shippingForm,
+        shippingAddress,
         paymentMethod,
         notes
       };
@@ -261,8 +350,66 @@ export default function CheckoutPage() {
                     Shipping Information
                   </h2>
                 </div>
+
+                {/* Saved addresses picker */}
+                {savedAddresses.length > 0 && (
+                  <div className="mb-6">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Select a saved address:
+                    </p>
+                    <div className="space-y-2">
+                      {savedAddresses.map((addr) => (
+                        <label
+                          key={addr._id}
+                          className={`flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                            selectedAddressId === addr._id && !useNewAddress
+                              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                              : 'border-gray-200 dark:border-dark-border hover:border-primary-300'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="savedAddress"
+                            checked={selectedAddressId === addr._id && !useNewAddress}
+                            onChange={() => handleSelectSavedAddress(addr)}
+                            className="mt-1"
+                          />
+                          <MapPinIcon className="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-900 dark:text-white text-sm">{addr.label || 'Address'}</span>
+                              {addr.isDefault && (
+                                <span className="flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400">
+                                  <CheckBadgeIcon className="w-3 h-3" /> Default
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{addr.street}, {addr.city}</p>
+                          </div>
+                        </label>
+                      ))}
+                      <label
+                        className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                          useNewAddress
+                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                            : 'border-gray-200 dark:border-dark-border hover:border-primary-300'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="savedAddress"
+                          checked={useNewAddress}
+                          onChange={() => { setUseNewAddress(true); setSelectedAddressId(null); }}
+                          className="mt-1"
+                        />
+                        <PlusIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Enter a new address</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
                 
-                <div className="space-y-4">
+                <div className={`space-y-4 ${savedAddresses.length > 0 && !useNewAddress ? 'opacity-60 pointer-events-none' : ''}`}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input
                       label="Full Name *"
@@ -342,7 +489,7 @@ export default function CheckoutPage() {
                     label="Country"
                     name="country"
                     value={shippingForm.country}
-                    disabled
+                    onChange={handleShippingChange}
                   />
                 </div>
                 

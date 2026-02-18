@@ -60,7 +60,9 @@ const userSchema = new mongoose.Schema({
     postalCode: String,
     country: { type: String, default: 'Saudi Arabia' },
     isDefault: { type: Boolean, default: false },
-    phone: String
+    phone: String,
+    latitude: Number,
+    longitude: Number
   }],
   
   // Supplier-specific fields

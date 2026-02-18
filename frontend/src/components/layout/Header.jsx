@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +16,11 @@ import {
   SunIcon,
   MoonIcon,
   HeartIcon,
+  ChevronDownIcon,
+  Squares2X2Icon,
+  ShoppingBagIcon,
+  TruckIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
 
 /**
@@ -30,6 +35,19 @@ export default function Header() {
   const { wishlistIds } = useWishlist();
   const isLoggedIn = !!localStorage.getItem('token');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   
   const navigation = [
     { name: t('common:home'), href: '/' },
@@ -124,13 +142,74 @@ export default function Header() {
             
             {/* User / Account */}
             {isLoggedIn ? (
-              <Link
-                to="/dashboard"
-                className="hidden sm:flex p-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded-lg"
-                title="My Account"
-              >
-                <UserIcon className="w-5 h-5" />
-              </Link>
+              <div className="relative hidden sm:block" ref={dropdownRef}>
+                <button
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  className="flex items-center gap-1 p-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded-lg"
+                  title="My Account"
+                >
+                  <UserIcon className="w-5 h-5" />
+                  <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Dropdown Panel */}
+                {userDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-xl shadow-lg py-1 z-50 animate-fade-in">
+                    <Link
+                      to="/dashboard"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-bg-secondary transition-colors"
+                      onClick={() => setUserDropdownOpen(false)}
+                    >
+                      <Squares2X2Icon className="w-4 h-4" />
+                      My Dashboard
+                    </Link>
+                    <Link
+                      to="/profile"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-bg-secondary transition-colors"
+                      onClick={() => setUserDropdownOpen(false)}
+                    >
+                      <UserIcon className="w-4 h-4" />
+                      My Profile
+                    </Link>
+                    <Link
+                      to="/orders"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-bg-secondary transition-colors"
+                      onClick={() => setUserDropdownOpen(false)}
+                    >
+                      <ShoppingBagIcon className="w-4 h-4" />
+                      My Orders
+                    </Link>
+                    <Link
+                      to="/vehicles"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-bg-secondary transition-colors"
+                      onClick={() => setUserDropdownOpen(false)}
+                    >
+                      <TruckIcon className="w-4 h-4" />
+                      My Vehicles
+                    </Link>
+                    <Link
+                      to="/wishlist"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-bg-secondary transition-colors"
+                      onClick={() => setUserDropdownOpen(false)}
+                    >
+                      <HeartIcon className="w-4 h-4" />
+                      Wishlist
+                    </Link>
+                    <div className="my-1 border-t border-gray-100 dark:border-dark-border" />
+                    <button
+                      onClick={() => {
+                        authService.logout();
+                        setUserDropdownOpen(false);
+                        navigate('/');
+                      }}
+                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-error-600 dark:text-error-400 hover:bg-error-50 dark:hover:bg-error-900/20 transition-colors"
+                    >
+                      <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <Link
                 to="/login"
@@ -179,8 +258,14 @@ export default function Header() {
                     <Link to="/dashboard" className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors" onClick={() => setMobileMenuOpen(false)}>
                       My Dashboard
                     </Link>
+                    <Link to="/profile" className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                      My Profile
+                    </Link>
                     <Link to="/orders" className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors" onClick={() => setMobileMenuOpen(false)}>
                       My Orders
+                    </Link>
+                    <Link to="/vehicles" className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                      My Vehicles
                     </Link>
                     <Link to="/wishlist" className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors" onClick={() => setMobileMenuOpen(false)}>
                       Wishlist

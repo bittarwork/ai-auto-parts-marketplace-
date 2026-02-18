@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+
 import Container from '../components/common/Container';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
+import Alert from '../components/common/Alert';
 import { InlineLoader } from '../components/common/Spinner';
 import authService from '../services/authService';
 import orderService from '../services/orderService';
@@ -11,30 +13,27 @@ import {
   ShoppingBagIcon,
   HeartIcon,
   ChevronRightIcon,
-  TruckIcon
+  TruckIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
 /**
  * User Dashboard
- * Order history, profile shortcut, wishlist
+ * Order history, profile shortcut, wishlist, vehicles
  */
 export default function DashboardPage() {
-  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({});
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!localStorage.getItem('token')) {
-      navigate('/login', { state: { from: '/dashboard', message: 'Login required' } });
-      return;
-    }
     loadData();
-  }, [navigate]);
+  }, []);
 
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
       const [meRes, ordersRes] = await Promise.all([
         authService.getMe(),
@@ -45,17 +44,16 @@ export default function DashboardPage() {
       }
       if (ordersRes.success) {
         setOrders(ordersRes.data || []);
-        setPagination(ordersRes.pagination || {});
       }
     } catch (err) {
-      console.error('Dashboard load error:', err);
+      setError(err?.message || 'Failed to load dashboard data. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const formatPrice = (amount) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR', minimumFractionDigits: 0 }).format(amount);
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(amount);
 
   const formatDate = (dateStr) =>
     new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
@@ -94,7 +92,19 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Error with retry */}
+        {error && (
+          <div className="mb-6">
+            <Alert type="error" message={error} />
+            <div className="mt-2 flex justify-end">
+              <Button variant="outline" size="sm" leftIcon={<ArrowPathIcon className="w-4 h-4" />} onClick={loadData}>
+                Retry
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Link to="/profile">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
               <div className="flex items-center gap-4">
@@ -103,7 +113,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">Profile</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Manage your account</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Manage account</p>
                 </div>
                 <ChevronRightIcon className="w-5 h-5 text-gray-400 ml-auto" />
               </div>
@@ -117,7 +127,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">Orders</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">View order history</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Order history</p>
                 </div>
                 <ChevronRightIcon className="w-5 h-5 text-gray-400 ml-auto" />
               </div>
@@ -132,6 +142,20 @@ export default function DashboardPage() {
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">Wishlist</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Saved products</p>
+                </div>
+                <ChevronRightIcon className="w-5 h-5 text-gray-400 ml-auto" />
+              </div>
+            </Card>
+          </Link>
+          <Link to="/vehicles">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                  <TruckIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Vehicles</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">My cars</p>
                 </div>
                 <ChevronRightIcon className="w-5 h-5 text-gray-400 ml-auto" />
               </div>

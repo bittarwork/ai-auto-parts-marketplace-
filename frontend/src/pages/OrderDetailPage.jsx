@@ -3,13 +3,15 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import Container from '../components/common/Container';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
+import ConfirmModal from '../components/common/ConfirmModal';
 import { InlineLoader } from '../components/common/Spinner';
 import orderService from '../services/orderService';
 import { getProductImageUrl, handleImageError } from '../utils/imageUtils';
 import {
-  CheckCircleIcon,
   TruckIcon,
-  ArrowLeftIcon
+  ArrowLeftIcon,
+  MapPinIcon,
+  ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline';
 
 /**
@@ -22,6 +24,7 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('token')) {
@@ -48,11 +51,11 @@ export default function OrderDetailPage() {
   };
 
   const handleCancel = async () => {
-    if (!confirm('Are you sure you want to cancel this order?')) return;
     setCancelling(true);
     try {
       const response = await orderService.cancelOrder(id, 'Cancelled by customer');
       if (response.success) {
+        setShowCancelModal(false);
         await loadOrder();
       }
     } catch (err) {
@@ -63,7 +66,7 @@ export default function OrderDetailPage() {
   };
 
   const formatPrice = (amount) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR', minimumFractionDigits: 0 }).format(amount);
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(amount);
 
   const formatDate = (dateStr) =>
     new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -124,7 +127,7 @@ export default function OrderDetailPage() {
                 {order.status}
               </span>
               {canCancel && (
-                <Button variant="outline" onClick={handleCancel} loading={cancelling}>
+                <Button variant="outline" onClick={() => setShowCancelModal(true)}>
                   Cancel Order
                 </Button>
               )}
@@ -134,6 +137,49 @@ export default function OrderDetailPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
+            {/* Tracking Info */}
+            {order.trackingInfo && (
+              <Card>
+                <div className="flex items-center gap-3 mb-4">
+                  <TruckIcon className="w-5 h-5 text-primary-600" />
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Tracking Information</h2>
+                </div>
+                <div className="space-y-2 text-sm">
+                  {order.trackingInfo.carrier && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">Carrier</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{order.trackingInfo.carrier}</span>
+                    </div>
+                  )}
+                  {order.trackingInfo.trackingNumber && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500 dark:text-gray-400">Tracking Number</span>
+                      <span className="font-mono font-medium text-gray-900 dark:text-white">{order.trackingInfo.trackingNumber}</span>
+                    </div>
+                  )}
+                  {order.trackingInfo.estimatedDelivery && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">Estimated Delivery</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{formatDate(order.trackingInfo.estimatedDelivery)}</span>
+                    </div>
+                  )}
+                  {order.trackingInfo.url && (
+                    <div className="mt-3">
+                      <a
+                        href={order.trackingInfo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:underline"
+                      >
+                        <ClipboardDocumentListIcon className="w-4 h-4" />
+                        Track your shipment
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
+
             <Card>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Items</h2>
               <div className="space-y-4">
@@ -208,6 +254,18 @@ export default function OrderDetailPage() {
           </div>
         </div>
       </Container>
+
+      {/* Cancel Order Confirm Modal */}
+      <ConfirmModal
+        open={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={handleCancel}
+        title="Cancel Order"
+        message="Are you sure you want to cancel this order? This action cannot be undone."
+        confirmLabel="Yes, Cancel Order"
+        variant="danger"
+        loading={cancelling}
+      />
     </div>
   );
 }

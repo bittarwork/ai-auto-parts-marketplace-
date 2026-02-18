@@ -54,4 +54,39 @@ router.get('/me', protect, authController.getMe);
  */
 router.put('/profile', protect, authController.updateProfile);
 
+/**
+ * @route   PUT /api/auth/change-password
+ * @desc    Change password for authenticated user
+ * @access  Private
+ */
+router.put('/change-password', protect, authController.changePassword);
+
+/**
+ * @route   POST /api/auth/addresses
+ * @desc    Add new address
+ * @access  Private
+ */
+router.post('/addresses', protect, authController.addAddress);
+
+/**
+ * @route   PUT /api/auth/addresses/:addressId
+ * @desc    Update an address
+ * @access  Private
+ */
+router.put('/addresses/:addressId', protect, authController.updateAddress);
+
+/**
+ * @route   DELETE /api/auth/addresses/:addressId
+ * @desc    Delete an address
+ * @access  Private
+ */
+router.delete('/addresses/:addressId', protect, authController.deleteAddress);
+
+/**
+ * @route   PATCH /api/auth/addresses/:addressId/default
+ * @desc    Set address as default
+ * @access  Private
+ */
+router.patch('/addresses/:addressId/default', protect, authController.setDefaultAddress);
+
 module.exports = router;

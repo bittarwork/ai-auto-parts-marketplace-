@@ -291,3 +291,178 @@ exports.updateProfile = async (req, res) => {
     });
   }
 };
+
+/**
+ * Change password for authenticated user
+ * PUT /api/auth/change-password
+ * @access Private
+ */
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Current and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
+    }
+
+    // Load user with password field
+    const user = await User.findById(req.user._id).select('+password');
+    const isMatch = await user.comparePassword(currentPassword);
+
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ success: true, message: 'Password changed successfully' });
+
+  } catch (error) {
+    console.error('[Auth Controller] Change password error:', error);
+    res.status(500).json({ success: false, message: 'Error changing password', error: error.message });
+  }
+};
+
+/**
+ * Add a new address to user profile
+ * POST /api/auth/addresses
+ * @access Private
+ */
+exports.addAddress = async (req, res) => {
+  try {
+    const { label, street, city, district, postalCode, country, phone, isDefault, latitude, longitude } = req.body;
+
+    if (!street || !city) {
+      return res.status(400).json({ success: false, message: 'Street and city are required' });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    // If setting as default or first address, clear other defaults
+    if (isDefault || user.addresses.length === 0) {
+      user.addresses.forEach(addr => { addr.isDefault = false; });
+    }
+
+    user.addresses.push({
+      label: label || 'Home',
+      street,
+      city,
+      district: district || '',
+      postalCode: postalCode || '',
+      country: country || 'Syria',
+      phone: phone || '',
+      isDefault: isDefault || user.addresses.length === 0,
+      latitude: latitude ? Number(latitude) : undefined,
+      longitude: longitude ? Number(longitude) : undefined
+    });
+
+    await user.save();
+
+    res.status(201).json({ success: true, message: 'Address added', data: user.addresses });
+
+  } catch (error) {
+    console.error('[Auth Controller] Add address error:', error);
+    res.status(500).json({ success: false, message: 'Error adding address', error: error.message });
+  }
+};
+
+/**
+ * Update an existing address
+ * PUT /api/auth/addresses/:addressId
+ * @access Private
+ */
+exports.updateAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+    const updates = req.body;
+
+    const user = await User.findById(req.user._id);
+    const address = user.addresses.id(addressId);
+
+    if (!address) {
+      return res.status(404).json({ success: false, message: 'Address not found' });
+    }
+
+    // If setting as default, clear other defaults
+    if (updates.isDefault) {
+      user.addresses.forEach(addr => { addr.isDefault = false; });
+    }
+
+    Object.assign(address, updates);
+    await user.save();
+
+    res.json({ success: true, message: 'Address updated', data: user.addresses });
+
+  } catch (error) {
+    console.error('[Auth Controller] Update address error:', error);
+    res.status(500).json({ success: false, message: 'Error updating address', error: error.message });
+  }
+};
+
+/**
+ * Delete an address
+ * DELETE /api/auth/addresses/:addressId
+ * @access Private
+ */
+exports.deleteAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+
+    const user = await User.findById(req.user._id);
+    const address = user.addresses.id(addressId);
+
+    if (!address) {
+      return res.status(404).json({ success: false, message: 'Address not found' });
+    }
+
+    const wasDefault = address.isDefault;
+    address.deleteOne();
+
+    // If deleted address was default, set first remaining as default
+    if (wasDefault && user.addresses.length > 0) {
+      user.addresses[0].isDefault = true;
+    }
+
+    await user.save();
+
+    res.json({ success: true, message: 'Address deleted', data: user.addresses });
+
+  } catch (error) {
+    console.error('[Auth Controller] Delete address error:', error);
+    res.status(500).json({ success: false, message: 'Error deleting address', error: error.message });
+  }
+};
+
+/**
+ * Set an address as default
+ * PATCH /api/auth/addresses/:addressId/default
+ * @access Private
+ */
+exports.setDefaultAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+
+    const user = await User.findById(req.user._id);
+    const address = user.addresses.id(addressId);
+
+    if (!address) {
+      return res.status(404).json({ success: false, message: 'Address not found' });
+    }
+
+    user.addresses.forEach(addr => { addr.isDefault = false; });
+    address.isDefault = true;
+
+    await user.save();
+
+    res.json({ success: true, message: 'Default address updated', data: user.addresses });
+
+  } catch (error) {
+    console.error('[Auth Controller] Set default address error:', error);
+    res.status(500).json({ success: false, message: 'Error setting default address', error: error.message });
+  }
+};

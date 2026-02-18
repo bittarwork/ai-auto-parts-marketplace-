@@ -93,6 +93,53 @@ class AuthService {
   async updateProfile(profileData) {
     return api.put('/auth/profile', profileData);
   }
+
+  /**
+   * Change password for authenticated user
+   * @param {string} currentPassword
+   * @param {string} newPassword
+   * @returns {Promise<Object>} Success response
+   */
+  async changePassword(currentPassword, newPassword) {
+    return api.put('/auth/change-password', { currentPassword, newPassword });
+  }
+
+  /**
+   * Add a new address
+   * @param {Object} addressData
+   * @returns {Promise<Object>} Updated addresses array
+   */
+  async addAddress(addressData) {
+    return api.post('/auth/addresses', addressData);
+  }
+
+  /**
+   * Update an existing address
+   * @param {string} addressId
+   * @param {Object} updates
+   * @returns {Promise<Object>} Updated addresses array
+   */
+  async updateAddress(addressId, updates) {
+    return api.put(`/auth/addresses/${addressId}`, updates);
+  }
+
+  /**
+   * Delete an address
+   * @param {string} addressId
+   * @returns {Promise<Object>} Updated addresses array
+   */
+  async deleteAddress(addressId) {
+    return api.delete(`/auth/addresses/${addressId}`);
+  }
+
+  /**
+   * Set an address as the default
+   * @param {string} addressId
+   * @returns {Promise<Object>} Updated addresses array
+   */
+  async setDefaultAddress(addressId) {
+    return api.patch(`/auth/addresses/${addressId}/default`, {});
+  }
   
   /**
    * Set auth token in localStorage
