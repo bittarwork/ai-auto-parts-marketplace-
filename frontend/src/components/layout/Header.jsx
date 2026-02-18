@@ -7,6 +7,7 @@ import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import Container from '../common/Container';
 import Button from '../common/Button';
+import ConfirmModal from '../common/ConfirmModal';
 import {
   Bars3Icon,
   XMarkIcon,
@@ -36,7 +37,16 @@ export default function Header() {
   const isLoggedIn = !!localStorage.getItem('token');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const handleLogout = () => {
+    authService.logout();
+    setLogoutModalOpen(false);
+    setUserDropdownOpen(false);
+    setMobileMenuOpen(false);
+    navigate('/');
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -198,14 +208,13 @@ export default function Header() {
                     <div className="my-1 border-t border-gray-100 dark:border-dark-border" />
                     <button
                       onClick={() => {
-                        authService.logout();
                         setUserDropdownOpen(false);
-                        navigate('/');
+                        setLogoutModalOpen(true);
                       }}
                       className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-error-600 dark:text-error-400 hover:bg-error-50 dark:hover:bg-error-900/20 transition-colors"
                     >
                       <ArrowRightOnRectangleIcon className="w-4 h-4" />
-                      Logout
+                      {t('common:logout')}
                     </button>
                   </div>
                 )}
@@ -272,13 +281,12 @@ export default function Header() {
                     </Link>
                     <button
                       onClick={() => {
-                        authService.logout();
                         setMobileMenuOpen(false);
-                        navigate('/');
+                        setLogoutModalOpen(true);
                       }}
                       className="block w-full text-left px-4 py-2 text-error-600 dark:text-error-400 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors"
                     >
-                      Logout
+                      {t('common:logout')}
                     </button>
                   </>
                 ) : (
@@ -296,6 +304,17 @@ export default function Header() {
           </Container>
         </div>
       )}
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal
+        open={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+        title={t('common:logoutConfirmTitle')}
+        message={t('common:logoutConfirmMessage')}
+        confirmLabel={t('common:logout')}
+        cancelLabel={t('common:cancel')}
+        variant="danger"
+      />
     </header>
   );
 }
