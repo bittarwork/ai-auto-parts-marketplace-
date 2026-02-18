@@ -166,17 +166,19 @@ const orderSchema = new mongoose.Schema({
 orderSchema.index({ customer: 1, createdAt: -1 });
 orderSchema.index({ status: 1, paymentStatus: 1 });
 
-// Pre-save middleware to generate order number (async - no next in Mongoose)
-orderSchema.pre('save', async function() {
+// Pre-validate middleware: generate orderNumber BEFORE validation runs
+// (Mongoose validates before pre-save, so orderNumber must be set here)
+orderSchema.pre('validate', async function() {
   if (!this.orderNumber) {
-    // Generate order number: ORD-YYYYMMDD-XXXX
+    // Generate order number: ORD-YYYYMMDD-XXXX (unique per day)
     const date = new Date();
     const dateStr = date.toISOString().split('T')[0].replace(/-/g, '');
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
     const count = await this.constructor.countDocuments({
-      createdAt: {
-        $gte: new Date(date.setHours(0, 0, 0, 0)),
-        $lt: new Date(date.setHours(23, 59, 59, 999))
-      }
+      createdAt: { $gte: startOfDay, $lt: endOfDay }
     });
     this.orderNumber = `ORD-${dateStr}-${String(count + 1).padStart(4, '0')}`;
   }
