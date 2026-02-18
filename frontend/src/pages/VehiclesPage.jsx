@@ -6,6 +6,9 @@ import Input from '../components/common/Input';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/common/ConfirmModal';
 import vehicleService from '../services/vehicleService';
+import ProductGrid from '../components/products/ProductGrid';
+import { InlineLoader } from '../components/common/Spinner';
+import aiSearchService from '../services/aiSearchService';
 import {
   TruckIcon,
   PlusIcon,
@@ -15,7 +18,11 @@ import {
   CheckBadgeIcon,
   XMarkIcon,
   Cog6ToothIcon,
-  CalendarIcon
+  CalendarIcon,
+  MagnifyingGlassIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 
@@ -51,6 +58,12 @@ export default function VehiclesPage() {
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Compatible parts state
+  const [expandedVehicleId, setExpandedVehicleId] = useState(null);
+  const [compatibleProducts, setCompatibleProducts] = useState([]);
+  const [compatibleLoading, setCompatibleLoading] = useState(false);
+  const [compatibleCategory, setCompatibleCategory] = useState('');
 
   useEffect(() => {
     loadVehicles();
@@ -164,6 +177,41 @@ export default function VehiclesPage() {
       toast.error('Failed to delete vehicle');
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const toggleCompatibleParts = async (vehicleId) => {
+    if (expandedVehicleId === vehicleId) {
+      setExpandedVehicleId(null);
+      setCompatibleProducts([]);
+      return;
+    }
+    setExpandedVehicleId(vehicleId);
+    setCompatibleCategory('');
+    loadCompatibleParts(vehicleId, '');
+  };
+
+  const loadCompatibleParts = async (vehicleId, category) => {
+    setCompatibleLoading(true);
+    try {
+      const res = await aiSearchService.getCompatibleProducts(vehicleId, {
+        category: category || undefined,
+        limit: 8
+      });
+      if (res.success) {
+        setCompatibleProducts(res.data?.products || res.data || []);
+      }
+    } catch (err) {
+      console.error('Error loading compatible products:', err);
+    } finally {
+      setCompatibleLoading(false);
+    }
+  };
+
+  const handleCategoryFilter = (category) => {
+    setCompatibleCategory(category);
+    if (expandedVehicleId) {
+      loadCompatibleParts(expandedVehicleId, category);
     }
   };
 
@@ -350,6 +398,18 @@ export default function VehiclesPage() {
                     )}
                     <div className="flex-1" />
                     <button
+                      onClick={() => toggleCompatibleParts(vehicle._id)}
+                      className="flex items-center gap-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 px-3 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                      title="Browse compatible parts"
+                    >
+                      <WrenchScrewdriverIcon className="w-4 h-4" />
+                      Parts
+                      {expandedVehicleId === vehicle._id
+                        ? <ChevronUpIcon className="w-3 h-3" />
+                        : <ChevronDownIcon className="w-3 h-3" />
+                      }
+                    </button>
+                    <button
                       onClick={() => openEdit(vehicle)}
                       className="p-2.5 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-xl transition-colors"
                       title="Edit"
@@ -364,6 +424,40 @@ export default function VehiclesPage() {
                       <TrashIcon className="w-4 h-4" />
                     </button>
                   </div>
+
+                  {/* Compatible Parts Section */}
+                  {expandedVehicleId === vehicle._id && (
+                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-dark-border">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                          <MagnifyingGlassIcon className="w-4 h-4 text-blue-500" />
+                          Compatible Parts for {vehicle.brand} {vehicle.model}
+                        </h4>
+                        <select
+                          value={compatibleCategory}
+                          onChange={(e) => handleCategoryFilter(e.target.value)}
+                          className="text-xs border border-gray-300 dark:border-dark-border rounded-lg px-2 py-1 bg-white dark:bg-dark-bg text-gray-700 dark:text-gray-300"
+                        >
+                          <option value="">All Categories</option>
+                          <option value="engine">Engine</option>
+                          <option value="brakes">Brakes</option>
+                          <option value="suspension">Suspension</option>
+                          <option value="electrical">Electrical</option>
+                          <option value="body">Body Parts</option>
+                          <option value="filters">Filters</option>
+                        </select>
+                      </div>
+                      {compatibleLoading ? (
+                        <InlineLoader text="Finding compatible parts..." />
+                      ) : compatibleProducts.length > 0 ? (
+                        <ProductGrid products={compatibleProducts} columns={2} />
+                      ) : (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-6">
+                          No compatible parts found for this category.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </Card>
               ))}
             </div>

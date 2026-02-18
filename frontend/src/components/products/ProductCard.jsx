@@ -12,6 +12,7 @@ import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import Card from '../common/Card';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
+import CompatibilityBadge from './CompatibilityBadge';
 import { getProductImageUrl, handleImageError } from '../../utils/imageUtils';
 import { useCart } from '../../contexts/CartContext';
 import productService from '../../services/productService';
@@ -75,16 +76,16 @@ export default function ProductCard({
       </div>
       
       {/* Compatibility Badge */}
-      {showCompatibility && compatibilityStatus && (
+      {showCompatibility && (
         <div className="absolute top-2 right-2 z-10">
-          {compatibilityStatus.isCompatible ? (
-            <Badge variant="success" dot>
-              Compatible
-            </Badge>
+          {compatibilityStatus ? (
+            compatibilityStatus.isCompatible ? (
+              <Badge variant="success" dot>Compatible</Badge>
+            ) : (
+              <Badge variant="secondary" dot>Check Compatibility</Badge>
+            )
           ) : (
-            <Badge variant="secondary" dot>
-              Check Compatibility
-            </Badge>
+            <CompatibilityBadge productId={_id} variant="badge" />
           )}
         </div>
       )}

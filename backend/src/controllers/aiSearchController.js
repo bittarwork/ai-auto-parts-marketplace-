@@ -21,7 +21,7 @@ exports.intelligentSearch = async (req, res) => {
     }
     
     // Get user ID from authenticated request (if available)
-    const userId = req.user ? req.user.userId : null;
+    const userId = req.user ? req.user._id : null;
     
     // Perform intelligent search
     const results = await aiSearchService.intelligentSearch(query, userId, {
@@ -196,7 +196,7 @@ exports.getRecommendations = async (req, res) => {
     }
     
     const { vehicleId, limit = 10 } = req.query;
-    const userId = req.user.userId;
+    const userId = req.user._id;
     
     const recommendations = await recommendationService.getPersonalizedRecommendations(
       userId,
@@ -294,7 +294,7 @@ exports.chatbotMessage = async (req, res) => {
       });
     }
     
-    const userId = req.user ? req.user.userId : null;
+    const userId = req.user ? req.user._id : null;
     
     const response = await chatbotService.processMessage(
       message,

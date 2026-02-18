@@ -7,6 +7,8 @@ import Badge from '../components/common/Badge';
 import Button from '../components/common/Button';
 import { InlineLoader } from '../components/common/Spinner';
 import ProductGrid from '../components/products/ProductGrid';
+import CompatibilityBadge from '../components/products/CompatibilityBadge';
+import FrequentlyBoughtTogether from '../components/products/FrequentlyBoughtTogether';
 import productService from '../services/productService';
 import aiSearchService from '../services/aiSearchService';
 import { getProductImageUrl, handleImageError } from '../utils/imageUtils';
@@ -372,6 +374,11 @@ export default function ProductDetailsPage() {
           </div>
         </div>
 
+        {/* Compatibility Check */}
+        <div className="mb-8">
+          <CompatibilityBadge productId={id} variant="detailed" />
+        </div>
+
         {/* Product Details */}
         <div className="mb-12">
           <Card>
@@ -419,6 +426,11 @@ export default function ProductDetailsPage() {
               </div>
             </CardBody>
           </Card>
+        </div>
+
+        {/* Frequently Bought Together */}
+        <div className="mb-12">
+          <FrequentlyBoughtTogether productId={id} />
         </div>
 
         {/* Similar Products */}

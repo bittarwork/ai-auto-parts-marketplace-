@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Container from '../components/common/Container';
 import Card, { CardHeader, CardBody } from '../components/common/Card';
 import Badge from '../components/common/Badge';
 import IntelligentSearchBar from '../components/search/IntelligentSearchBar';
+import SearchFilters from '../components/search/SearchFilters';
 import ProductGrid from '../components/products/ProductGrid';
 import { InlineLoader } from '../components/common/Spinner';
 import aiSearchService from '../services/aiSearchService';
@@ -13,12 +14,14 @@ import {
   AdjustmentsHorizontalIcon,
   SparklesIcon,
   FunnelIcon,
+  MagnifyingGlassIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
 /**
  * ★★★ SEARCH RESULTS PAGE ★★★
- * Displays AI-powered search results with NLP analysis
+ * AI-powered search results with NLP analysis, filters, and related searches
  */
 export default function SearchResultsPage() {
   const { t } = useTranslation();
@@ -32,11 +35,13 @@ export default function SearchResultsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('relevance');
   const [filters, setFilters] = useState({});
+  const [relatedSearches, setRelatedSearches] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
   
-  // Perform search when query changes
   useEffect(() => {
     if (query) {
       performSearch();
+      loadRelatedSearches();
     }
   }, [query, currentPage, sortBy, filters]);
   
@@ -65,14 +70,34 @@ export default function SearchResultsPage() {
       setLoading(false);
     }
   };
+
+  const loadRelatedSearches = async () => {
+    setRelatedLoading(true);
+    try {
+      const res = await aiSearchService.getRelatedSearches(query, 'en');
+      if (res.success && res.data) {
+        setRelatedSearches(res.data);
+      }
+    } catch {
+      setRelatedSearches([]);
+    } finally {
+      setRelatedLoading(false);
+    }
+  };
   
   const handleNewSearch = (newQuery) => {
     setSearchParams({ q: newQuery });
     setCurrentPage(1);
+    setFilters({});
   };
   
   const handleSortChange = (newSort) => {
     setSortBy(newSort);
+    setCurrentPage(1);
+  };
+
+  const handleFiltersChange = (newFilters) => {
+    setFilters(newFilters);
     setCurrentPage(1);
   };
   
@@ -85,11 +110,16 @@ export default function SearchResultsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-dark-bg py-8">
       <Container>
         {/* Search Bar */}
-        <div className="mb-8">
+        <div className="mb-6">
           <IntelligentSearchBar
             onSearch={handleNewSearch}
             autoFocus
           />
+        </div>
+
+        {/* Filters Panel */}
+        <div className="mb-6">
+          <SearchFilters filters={filters} onChange={handleFiltersChange} />
         </div>
         
         {/* Loading State */}
@@ -105,7 +135,7 @@ export default function SearchResultsPage() {
         {/* Results */}
         {!loading && results && (
           <>
-            {/* NLP Analysis Card ★★★ */}
+            {/* NLP Analysis Card */}
             {results.nlpAnalysis && results.nlpAnalysis.confidence > 30 && (
               <Card className="mb-6 border-primary-200 dark:border-primary-800/30">
                 <div className="flex items-start space-x-3">
@@ -143,6 +173,30 @@ export default function SearchResultsPage() {
                 </div>
               </Card>
             )}
+
+            {/* Related Searches */}
+            {relatedSearches.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <ArrowPathIcon className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Related Searches
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {relatedSearches.map((rs, index) => (
+                    <Link
+                      key={index}
+                      to={`/search?q=${encodeURIComponent(typeof rs === 'string' ? rs : rs.query || rs)}`}
+                      className="px-3 py-1.5 text-sm font-medium bg-white dark:bg-dark-bg-secondary text-gray-700 dark:text-gray-300 rounded-full border border-gray-200 dark:border-dark-border hover:border-primary-400 dark:hover:border-primary-600 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                    >
+                      <MagnifyingGlassIcon className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
+                      {typeof rs === 'string' ? rs : rs.query || rs}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
             
             {/* Results Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
@@ -151,7 +205,7 @@ export default function SearchResultsPage() {
                   Search Results
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Found {results.pagination.total} products in {results.searchMetadata.searchTime}ms
+                  Found {results.pagination?.total || 0} products{results.searchMetadata?.searchTime ? ` in ${results.searchMetadata.searchTime}ms` : ''}
                 </p>
               </div>
               
@@ -178,13 +232,13 @@ export default function SearchResultsPage() {
             {/* Products Grid */}
             <ProductGrid
               products={results.products}
-              showCompatibility={results.searchMetadata.hasVehicles}
+              showCompatibility={results.searchMetadata?.hasVehicles}
               onToggleWishlist={toggleWishlist}
               wishlistIds={wishlistIds}
             />
             
             {/* Pagination */}
-            {results.pagination.pages > 1 && (
+            {results.pagination?.pages > 1 && (
               <div className="mt-8 flex justify-center">
                 <nav className="flex items-center space-x-2">
                   <button
@@ -195,7 +249,6 @@ export default function SearchResultsPage() {
                     Previous
                   </button>
                   
-                  {/* Page Numbers */}
                   {[...Array(results.pagination.pages)].map((_, i) => {
                     const pageNum = i + 1;
                     const showPage = pageNum === 1 || 

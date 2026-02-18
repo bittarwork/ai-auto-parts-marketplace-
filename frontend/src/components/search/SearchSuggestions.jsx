@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { ClockIcon, MagnifyingGlassIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { ClockIcon, MagnifyingGlassIcon, SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
 /**
  * Search Suggestions Dropdown
- * Shows autocomplete suggestions with highlighting
+ * Shows autocomplete suggestions with highlighting and recent search history
  */
 export default function SearchSuggestions({ 
   suggestions = [],
@@ -12,11 +12,11 @@ export default function SearchSuggestions({
   onClose,
   highlightText = '',
   showRecent = false,
-  recentSearches = []
+  recentSearches = [],
+  onClearHistory
 }) {
   const containerRef = useRef(null);
   
-  // Close on click outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
@@ -28,7 +28,6 @@ export default function SearchSuggestions({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
   
-  // Highlight matching text
   const highlightMatch = (text, highlight) => {
     if (!highlight.trim()) {
       return text;
@@ -56,19 +55,34 @@ export default function SearchSuggestions({
       {/* Recent Searches */}
       {showRecent && recentSearches.length > 0 && (
         <div className="p-3 border-b border-gray-200 dark:border-dark-border">
-          <div className="flex items-center space-x-2 mb-2">
-            <ClockIcon className="w-4 h-4 text-gray-400" />
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              Recent Searches
-            </span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-2">
+              <ClockIcon className="w-4 h-4 text-gray-400" />
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Recent Searches
+              </span>
+            </div>
+            {onClearHistory && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClearHistory();
+                }}
+                className="text-xs text-gray-400 hover:text-error-500 dark:hover:text-error-400 flex items-center gap-1 transition-colors"
+              >
+                <XMarkIcon className="w-3 h-3" />
+                Clear
+              </button>
+            )}
           </div>
           <div className="space-y-1">
-            {recentSearches.slice(0, 3).map((search, index) => (
+            {recentSearches.slice(0, 5).map((search, index) => (
               <button
                 key={index}
                 onClick={() => onSelect(search)}
-                className="w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary rounded-md transition-colors"
+                className="w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary rounded-md transition-colors flex items-center gap-2"
               >
+                <ClockIcon className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                 {search}
               </button>
             ))}

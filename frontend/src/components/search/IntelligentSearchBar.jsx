@@ -9,11 +9,12 @@ import {
 } from '@heroicons/react/24/outline';
 import aiSearchService from '../../services/aiSearchService';
 import SearchSuggestions from './SearchSuggestions';
+import useSearchHistory from '../../hooks/useSearchHistory';
 import clsx from 'clsx';
 
 /**
  * ★★★ INTELLIGENT SEARCH BAR ★★★
- * Main search component with NLP, voice search, and autocomplete
+ * Main search component with NLP, voice search, autocomplete, and search history
  */
 export default function IntelligentSearchBar({ 
   onSearch,
@@ -24,6 +25,7 @@ export default function IntelligentSearchBar({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const inputRef = useRef(null);
+  const { history, addSearch, clearHistory } = useSearchHistory();
   
   const [query, setQuery] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -32,7 +34,6 @@ export default function IntelligentSearchBar({
   const [isLoading, setIsLoading] = useState(false);
   const [recognition, setRecognition] = useState(null);
   
-  // Initialize Speech Recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -46,8 +47,6 @@ export default function IntelligentSearchBar({
         const transcript = event.results[0][0].transcript;
         setQuery(transcript);
         setIsListening(false);
-        
-        // Auto-search after voice input
         handleSearch(transcript);
       };
       
@@ -64,14 +63,12 @@ export default function IntelligentSearchBar({
     }
   }, []);
   
-  // Auto-focus on mount if requested
   useEffect(() => {
     if (autoFocus && inputRef.current) {
       inputRef.current.focus();
     }
   }, [autoFocus]);
   
-  // Fetch suggestions when query changes
   useEffect(() => {
     const timer = setTimeout(() => {
       if (query.length >= 2) {
@@ -79,7 +76,7 @@ export default function IntelligentSearchBar({
       } else {
         setSuggestions([]);
       }
-    }, 300); // Debounce 300ms
+    }, 300);
     
     return () => clearTimeout(timer);
   }, [query]);
@@ -99,12 +96,11 @@ export default function IntelligentSearchBar({
     if (!searchQuery.trim()) return;
     
     setShowSuggestions(false);
+    addSearch(searchQuery.trim());
     
     if (onSearch) {
-      // Call parent callback if provided
       onSearch(searchQuery);
     } else {
-      // Navigate to search results page
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
     }
   };
@@ -143,29 +139,29 @@ export default function IntelligentSearchBar({
       setShowSuggestions(false);
     }
   };
+
+  // Show recent searches when input is focused but empty
+  const shouldShowRecent = showSuggestions && query.length < 2 && history.length > 0;
+  const shouldShowDropdown = showSuggestions && (suggestions.length > 0 || shouldShowRecent);
   
   const baseClasses = "relative w-full";
   const heroClasses = variant === 'hero' ? 'max-w-3xl mx-auto' : '';
   
   return (
     <div className={clsx(baseClasses, heroClasses)}>
-      {/* Search Input Container */}
       <div className="relative">
         <div className={clsx(
           "relative flex items-center",
           variant === 'hero' ? 'shadow-soft-lg' : 'shadow-soft'
         )}>
-          {/* Search Icon */}
           <div className="absolute left-4 pointer-events-none">
             <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
           </div>
           
-          {/* AI Indicator */}
           <div className="absolute left-11 pointer-events-none">
             <SparklesIcon className="w-4 h-4 text-primary-500 animate-pulse" />
           </div>
           
-          {/* Input Field */}
           <input
             ref={inputRef}
             type="text"
@@ -185,9 +181,7 @@ export default function IntelligentSearchBar({
             )}
           />
           
-          {/* Right Actions */}
           <div className="absolute right-2 flex items-center space-x-1">
-            {/* Clear Button */}
             {query && (
               <button
                 onClick={handleClear}
@@ -198,7 +192,6 @@ export default function IntelligentSearchBar({
               </button>
             )}
             
-            {/* Voice Search Button */}
             {recognition && (
               <button
                 onClick={handleVoiceSearch}
@@ -214,7 +207,6 @@ export default function IntelligentSearchBar({
               </button>
             )}
             
-            {/* Search Button */}
             <button
               onClick={() => handleSearch()}
               disabled={!query.trim()}
@@ -230,14 +222,12 @@ export default function IntelligentSearchBar({
           </div>
         </div>
         
-        {/* AI Hint */}
         {variant === 'hero' && !query && (
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-3">
             {t('search:aiHint')}
           </p>
         )}
         
-        {/* Voice Listening Indicator */}
         {isListening && (
           <div className="absolute top-full left-0 right-0 mt-2 text-center">
             <div className="inline-flex items-center space-x-2 px-4 py-2 bg-error-50 dark:bg-error-900/20 text-error-600 dark:text-error-400 rounded-lg">
@@ -251,13 +241,15 @@ export default function IntelligentSearchBar({
           </div>
         )}
         
-        {/* Suggestions Dropdown */}
-        {showSuggestions && suggestions.length > 0 && (
+        {shouldShowDropdown && (
           <SearchSuggestions
             suggestions={suggestions}
             onSelect={handleSuggestionClick}
             onClose={() => setShowSuggestions(false)}
             highlightText={query}
+            showRecent={shouldShowRecent}
+            recentSearches={history}
+            onClearHistory={clearHistory}
           />
         )}
       </div>

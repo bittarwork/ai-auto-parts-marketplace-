@@ -6,6 +6,7 @@ import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Alert from '../components/common/Alert';
 import { InlineLoader } from '../components/common/Spinner';
+import RecommendedProducts from '../components/products/RecommendedProducts';
 import authService from '../services/authService';
 import orderService from '../services/orderService';
 import {
@@ -161,6 +162,11 @@ export default function DashboardPage() {
               </div>
             </Card>
           </Link>
+        </div>
+
+        {/* Recommended Products */}
+        <div className="mb-8">
+          <RecommendedProducts limit={4} title="Recommended For You" showViewAll />
         </div>
 
         <Card>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   ChatBubbleLeftRightIcon,
   XMarkIcon,
@@ -11,31 +12,38 @@ import clsx from 'clsx';
 
 /**
  * ★★ CHAT WIDGET ★★
- * Floating AI chatbot widget for customer support
+ * Floating AI chatbot with quick actions and product context awareness
  */
 export default function ChatWidget() {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId] = useState(() => chatbotService.generateSessionId());
+  const [quickActions, setQuickActions] = useState([]);
+  const [showQuickActions, setShowQuickActions] = useState(true);
   
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Extract product ID from URL if on product details page
+  const getProductContext = () => {
+    const match = location.pathname.match(/^\/products\/([a-f0-9]{24})$/i);
+    return match ? { productId: match[1], currentPage: 'product_details' } : { currentPage: location.pathname };
+  };
   
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
   
-  // Focus input when chat opens
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isOpen]);
   
-  // Initial welcome message
+  // Welcome message + load quick actions
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       setMessages([{
@@ -44,29 +52,46 @@ export default function ChatWidget() {
         content: "Hello! I'm your AI assistant. How can I help you find the right auto parts today?",
         timestamp: new Date()
       }]);
+      loadQuickActions();
     }
   }, [isOpen]);
   
-  const sendMessage = async () => {
-    if (!inputMessage.trim()) return;
+  const loadQuickActions = async () => {
+    try {
+      const res = await chatbotService.getQuickActions('en');
+      if (res.success && res.data) {
+        setQuickActions(res.data);
+      }
+    } catch {
+      // Fallback quick actions
+      setQuickActions([
+        { label: 'Find parts for my car', message: 'Help me find parts for my car' },
+        { label: 'Check compatibility', message: 'I want to check if a part is compatible with my vehicle' },
+        { label: 'Shipping info', message: 'What are the shipping options?' },
+        { label: 'Return policy', message: 'What is your return policy?' }
+      ]);
+    }
+  };
+
+  const sendMessage = async (messageText) => {
+    const text = messageText || inputMessage;
+    if (!text.trim()) return;
     
     const userMessage = {
       id: Date.now(),
       role: 'user',
-      content: inputMessage,
+      content: text,
       timestamp: new Date()
     };
     
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setIsTyping(true);
+    setShowQuickActions(false);
     
     try {
-      const response = await chatbotService.sendMessage(
-        inputMessage,
-        sessionId,
-        {}
-      );
+      const context = getProductContext();
+      const response = await chatbotService.sendMessage(text, sessionId, context);
       
       if (response.success) {
         const botMessage = {
@@ -75,21 +100,17 @@ export default function ChatWidget() {
           content: response.data.message,
           timestamp: new Date()
         };
-        
         setMessages(prev => [...prev, botMessage]);
       }
     } catch (error) {
       console.error('Chatbot error:', error);
-      
-      const errorMessage = {
+      setMessages(prev => [...prev, {
         id: Date.now() + 1,
         role: 'assistant',
         content: "Sorry, I'm having trouble processing your message. Please try again or contact our support team.",
         timestamp: new Date(),
         isError: true
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
+      }]);
     } finally {
       setIsTyping(false);
     }
@@ -111,6 +132,7 @@ export default function ChatWidget() {
         content: "Chat cleared. How can I help you?",
         timestamp: new Date()
       }]);
+      setShowQuickActions(true);
     } catch (error) {
       console.error('Error clearing chat:', error);
     }
@@ -188,6 +210,21 @@ export default function ChatWidget() {
                 </div>
               </div>
             ))}
+
+            {/* Quick Actions */}
+            {showQuickActions && quickActions.length > 0 && messages.length <= 1 && (
+              <div className="flex flex-wrap gap-2">
+                {quickActions.map((action, index) => (
+                  <button
+                    key={index}
+                    onClick={() => sendMessage(action.message || action.label || action)}
+                    className="px-3 py-1.5 text-xs font-medium bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 rounded-full border border-primary-200 dark:border-primary-800/40 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+                  >
+                    {action.label || action}
+                  </button>
+                ))}
+              </div>
+            )}
             
             {/* Typing Indicator */}
             {isTyping && (
@@ -219,7 +256,7 @@ export default function ChatWidget() {
                 style={{ minHeight: '40px' }}
               />
               <button
-                onClick={sendMessage}
+                onClick={() => sendMessage()}
                 disabled={!inputMessage.trim() || isTyping}
                 className="p-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
                 aria-label="Send message"

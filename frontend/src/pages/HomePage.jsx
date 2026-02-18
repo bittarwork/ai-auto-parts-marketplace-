@@ -7,6 +7,7 @@ import Badge from '../components/common/Badge';
 import Button from '../components/common/Button';
 import IntelligentSearchBar from '../components/search/IntelligentSearchBar';
 import ProductGrid from '../components/products/ProductGrid';
+import RecommendedProducts from '../components/products/RecommendedProducts';
 import { InlineLoader } from '../components/common/Spinner';
 import aiSearchService from '../services/aiSearchService';
 import {
@@ -236,6 +237,15 @@ export default function HomePage() {
         </section>
       )}
       
+      {/* Personalized Recommendations */}
+      {!loading && (
+        <section className="py-16 bg-white dark:bg-dark-bg">
+          <Container>
+            <RecommendedProducts limit={4} />
+          </Container>
+        </section>
+      )}
+
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-800 dark:to-primary-900">
         <Container>
