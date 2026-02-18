@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, FunnelIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import DataTable from '../../components/admin/DataTable';
 import StatusBadge from '../../components/admin/StatusBadge';
 import { getAdminOrders } from '../../services/adminService';
@@ -8,38 +8,52 @@ import toast from 'react-hot-toast';
 
 /**
  * Admin Orders Management Page
- * Lists all orders with filters, search, and pagination
+ * Full-featured orders table with search, status/payment filters, and pagination
  */
 
-const ORDER_STATUSES = ['', 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
-const PAYMENT_STATUSES = ['', 'pending', 'paid', 'failed', 'refunded'];
+const ORDER_STATUSES  = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+const PAYMENT_STATUSES = ['pending', 'paid', 'failed', 'refunded'];
 
-const formatCurrency = (v) =>
+const fmtCurrency = (v) =>
   new Intl.NumberFormat('en-DE', { style: 'currency', currency: 'EUR' }).format(v);
 
-const formatDate = (d) =>
+const fmtDate = (d) =>
   new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+/* ─── Filter Chip ─── */
+const FilterChip = ({ label, value, active, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`h-7 px-3 rounded-full text-xs font-medium capitalize border transition-all duration-150 ${
+      active
+        ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200'
+        : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
+    }`}
+  >
+    {label}
+  </button>
+);
 
 const OrdersPage = () => {
   const navigate = useNavigate();
 
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders]       = useState([]);
   const [pagination, setPagination] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]     = useState(true);
 
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch]           = useState('');
+  const [statusFilter, setStatusFilter]   = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
-  const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [page, setPage]               = useState(1);
+  const [sortBy, setSortBy]           = useState('createdAt');
+  const [sortOrder, setSortOrder]     = useState('desc');
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
       const params = { page, limit: 20, sortBy, sortOrder };
-      if (search) params.search = search;
-      if (statusFilter) params.status = statusFilter;
+      if (search)        params.search        = search;
+      if (statusFilter)  params.status        = statusFilter;
       if (paymentFilter) params.paymentStatus = paymentFilter;
 
       const res = await getAdminOrders(params);
@@ -52,9 +66,7 @@ const OrdersPage = () => {
     }
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, [page, statusFilter, paymentFilter, sortBy, sortOrder]);
+  useEffect(() => { fetchOrders(); }, [page, statusFilter, paymentFilter, sortBy, sortOrder]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -65,12 +77,13 @@ const OrdersPage = () => {
   const columns = [
     {
       key: 'orderNumber',
-      label: 'Order #',
+      label: 'Order',
       sortable: true,
       render: (row) => (
-        <span className="font-mono text-sm font-medium text-blue-600">
-          #{row.orderNumber}
-        </span>
+        <div>
+          <p className="font-mono text-xs font-semibold text-blue-600">#{row.orderNumber}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{fmtDate(row.createdAt)}</p>
+        </div>
       )
     },
     {
@@ -85,10 +98,10 @@ const OrdersPage = () => {
     },
     {
       key: 'total',
-      label: 'Total',
+      label: 'Amount',
       sortable: true,
       render: (row) => (
-        <span className="font-semibold text-gray-800">{formatCurrency(row.total)}</span>
+        <span className="text-sm font-bold text-gray-900">{fmtCurrency(row.total)}</span>
       )
     },
     {
@@ -102,79 +115,83 @@ const OrdersPage = () => {
       render: (row) => <StatusBadge status={row.paymentStatus} />
     },
     {
-      key: 'createdAt',
-      label: 'Date',
-      sortable: true,
-      render: (row) => <span className="text-sm text-gray-500">{formatDate(row.createdAt)}</span>
-    },
-    {
       key: 'actions',
-      label: 'Actions',
+      label: '',
       render: (row) => (
         <button
           onClick={() => navigate(`/admin/orders/${row._id}`)}
-          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors px-2 py-1 rounded-lg hover:bg-blue-50"
         >
-          View
+          View →
         </button>
       )
     }
   ];
 
+  const hasFilters = statusFilter || paymentFilter || search;
+
   return (
     <div className="space-y-4">
-      {/* Filters Bar */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex flex-col lg:flex-row gap-3">
-          {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 flex gap-2">
-            <div className="relative flex-1">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search order number or customer..."
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
-            >
-              Search
-            </button>
-          </form>
-
-          {/* Status filters */}
-          <div className="flex items-center gap-2">
-            <FunnelIcon className="w-4 h-4 text-gray-400" />
-            <select
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Statuses</option>
-              {ORDER_STATUSES.filter(Boolean).map(s => (
-                <option key={s} value={s} className="capitalize">{s}</option>
-              ))}
-            </select>
-
-            <select
-              value={paymentFilter}
-              onChange={(e) => { setPaymentFilter(e.target.value); setPage(1); }}
-              className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Payments</option>
-              {PAYMENT_STATUSES.filter(Boolean).map(s => (
-                <option key={s} value={s} className="capitalize">{s}</option>
-              ))}
-            </select>
-          </div>
+      {/* ── Page header ── */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">Orders</h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {pagination ? `${pagination.total} total orders` : 'Loading…'}
+          </p>
         </div>
       </div>
 
-      {/* Table */}
+      {/* ── Search + Filters ── */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-4 space-y-3">
+        {/* Search row */}
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <div className="relative flex-1">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by order number or customer name…"
+              className="w-full pl-9 pr-4 h-9 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+            />
+          </div>
+          <button
+            type="submit"
+            className="h-9 px-4 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
+          >
+            Search
+          </button>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={() => { setSearch(''); setStatusFilter(''); setPaymentFilter(''); setPage(1); }}
+              className="h-9 px-3 text-gray-400 hover:text-gray-600 text-sm rounded-xl hover:bg-gray-100 transition-colors flex items-center gap-1"
+            >
+              <ArrowPathIcon className="w-3.5 h-3.5" />
+              Clear
+            </button>
+          )}
+        </form>
+
+        {/* Status chips */}
+        <div className="flex flex-wrap gap-1.5">
+          <span className="text-xs text-gray-400 mr-1 self-center">Status:</span>
+          <FilterChip label="All" value="" active={!statusFilter} onClick={() => { setStatusFilter(''); setPage(1); }} />
+          {ORDER_STATUSES.map(s => (
+            <FilterChip key={s} label={s} value={s} active={statusFilter === s} onClick={() => { setStatusFilter(s); setPage(1); }} />
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          <span className="text-xs text-gray-400 mr-1 self-center">Payment:</span>
+          <FilterChip label="All" value="" active={!paymentFilter} onClick={() => { setPaymentFilter(''); setPage(1); }} />
+          {PAYMENT_STATUSES.map(s => (
+            <FilterChip key={s} label={s} value={s} active={paymentFilter === s} onClick={() => { setPaymentFilter(s); setPage(1); }} />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Table ── */}
       <DataTable
         columns={columns}
         data={orders}

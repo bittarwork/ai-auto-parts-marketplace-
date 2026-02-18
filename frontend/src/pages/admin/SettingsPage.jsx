@@ -1,15 +1,23 @@
 import { useEffect, useState } from 'react';
+import {
+  Cog6ToothIcon, TruckIcon, CalculatorIcon, BellIcon, CheckIcon
+} from '@heroicons/react/24/outline';
 import { getSettings, updateSettings } from '../../services/adminService';
 import toast from 'react-hot-toast';
 
 /**
  * Admin Settings Page
- * Tabs: General | Shipping | Tax | Notifications
+ * Modern tab-based settings with icon tabs, smooth transitions
  */
 
-const TABS = ['General', 'Shipping', 'Tax', 'Notifications'];
+const TABS = [
+  { id: 'general',       label: 'General',       icon: Cog6ToothIcon },
+  { id: 'shipping',      label: 'Shipping',      icon: TruckIcon },
+  { id: 'tax',           label: 'Tax',           icon: CalculatorIcon },
+  { id: 'notifications', label: 'Notifications', icon: BellIcon },
+];
 
-const EMPTY_SETTINGS = {
+const EMPTY = {
   siteName: '',
   contactEmail: '',
   currency: 'EUR',
@@ -22,234 +30,225 @@ const EMPTY_SETTINGS = {
   notifyOnLowStock: true
 };
 
+const Label = ({ children, hint }) => (
+  <div className="mb-2">
+    <label className="text-sm font-medium text-gray-700">{children}</label>
+    {hint && <p className="text-xs text-gray-400 mt-0.5">{hint}</p>}
+  </div>
+);
+
+const Input = ({ type = 'text', value, onChange, placeholder, min, max, step }) => (
+  <input
+    type={type}
+    value={value}
+    onChange={onChange}
+    placeholder={placeholder}
+    min={min}
+    max={max}
+    step={step}
+    className="w-full h-10 px-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-gray-800"
+  />
+);
+
+const Select = ({ value, onChange, children }) => (
+  <select
+    value={value}
+    onChange={onChange}
+    className="w-full h-10 px-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-gray-800"
+  >
+    {children}
+  </select>
+);
+
+const Toggle = ({ checked, onChange, label, hint }) => (
+  <label className="flex items-start gap-3 cursor-pointer group">
+    <div className="relative mt-0.5 flex-shrink-0">
+      <input type="checkbox" checked={checked} onChange={onChange} className="sr-only" />
+      <div className={`w-10 h-5 rounded-full transition-colors ${checked ? 'bg-blue-600' : 'bg-gray-200'}`} />
+      <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-5' : ''}`} />
+    </div>
+    <div>
+      <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">{label}</p>
+      {hint && <p className="text-xs text-gray-400 mt-0.5">{hint}</p>}
+    </div>
+  </label>
+);
+
 const SettingsPage = () => {
-  const [activeTab, setActiveTab] = useState('General');
-  const [settings, setSettings] = useState(EMPTY_SETTINGS);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('general');
+  const [settings, setSettings]   = useState(EMPTY);
+  const [loading, setLoading]     = useState(true);
+  const [saving, setSaving]       = useState(false);
+  const [saved, setSaved]         = useState(false);
 
   useEffect(() => {
-    const fetch = async () => {
+    const load = async () => {
       try {
         const res = await getSettings();
-        setSettings({ ...EMPTY_SETTINGS, ...res.data });
-      } catch {
-        toast.error('Failed to load settings');
-      } finally {
-        setLoading(false);
-      }
+        setSettings({ ...EMPTY, ...res.data });
+      } catch { toast.error('Failed to load settings'); }
+      finally { setLoading(false); }
     };
-    fetch();
+    load();
   }, []);
 
-  const handleChange = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-  };
+  const set = (key, value) => setSettings(prev => ({ ...prev, [key]: value }));
 
   const handleSave = async () => {
     setSaving(true);
     try {
       await updateSettings(settings);
-      toast.success('Settings saved successfully');
-    } catch {
-      toast.error('Failed to save settings');
-    } finally {
-      setSaving(false);
-    }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch { toast.error('Failed to save settings'); }
+    finally { setSaving(false); }
   };
-
-  const inputClass = 'w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500';
-  const labelClass = 'text-sm font-medium text-gray-700 mb-1.5 block';
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-7 h-7 border-[3px] border-blue-200 border-t-blue-600 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
     <div className="max-w-2xl space-y-5">
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+      <div>
+        <h2 className="text-lg font-bold text-gray-900">Settings</h2>
+        <p className="text-xs text-gray-400 mt-0.5">Configure your store preferences</p>
+      </div>
+
+      {/* Tab bar */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-1.5 flex gap-1">
         {TABS.map(tab => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
-              activeTab === tab
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-xs font-semibold transition-all duration-150 ${
+              activeTab === tab.id
+                ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
             }`}
           >
-            {tab}
+            <tab.icon className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{tab.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Tab Content */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
-        {/* General */}
-        {activeTab === 'General' && (
-          <>
+      {/* Tab content */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm divide-y divide-gray-100">
+        {/* ── General ── */}
+        {activeTab === 'general' && (
+          <div className="p-6 space-y-5">
             <div>
-              <label className={labelClass}>Site Name</label>
-              <input
-                type="text"
-                value={settings.siteName}
-                onChange={(e) => handleChange('siteName', e.target.value)}
-                className={inputClass}
-                placeholder="Auto Parts Marketplace"
-              />
+              <Label hint="Displayed in browser tab and emails">Site Name</Label>
+              <Input value={settings.siteName} onChange={e => set('siteName', e.target.value)} placeholder="Auto Parts Marketplace" />
             </div>
             <div>
-              <label className={labelClass}>Contact Email</label>
-              <input
-                type="email"
-                value={settings.contactEmail}
-                onChange={(e) => handleChange('contactEmail', e.target.value)}
-                className={inputClass}
-                placeholder="admin@autoparts.com"
-              />
+              <Label hint="Used for order confirmations and support">Contact Email</Label>
+              <Input type="email" value={settings.contactEmail} onChange={e => set('contactEmail', e.target.value)} placeholder="admin@autoparts.com" />
             </div>
-            <div>
-              <label className={labelClass}>Currency</label>
-              <select
-                value={settings.currency}
-                onChange={(e) => handleChange('currency', e.target.value)}
-                className={inputClass}
-              >
-                <option value="EUR">EUR (Euro €)</option>
-                <option value="SYP">SYP (Syrian Pound ل.س)</option>
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label hint="All prices displayed in this currency">Currency</Label>
+                <Select value={settings.currency} onChange={e => set('currency', e.target.value)}>
+                  <option value="EUR">€ Euro (EUR)</option>
+                  <option value="SYP">ل.س Syrian Pound (SYP)</option>
+                </Select>
+              </div>
+              <div>
+                <Label>Default Language</Label>
+                <Select value={settings.defaultLanguage} onChange={e => set('defaultLanguage', e.target.value)}>
+                  <option value="en">English</option>
+                  <option value="ar">العربية (Arabic)</option>
+                </Select>
+              </div>
             </div>
-            <div>
-              <label className={labelClass}>Default Language</label>
-              <select
-                value={settings.defaultLanguage}
-                onChange={(e) => handleChange('defaultLanguage', e.target.value)}
-                className={inputClass}
-              >
-                <option value="en">English</option>
-                <option value="ar">Arabic (العربية)</option>
-              </select>
-            </div>
-          </>
-        )}
-
-        {/* Shipping */}
-        {activeTab === 'Shipping' && (
-          <>
-            <div>
-              <label className={labelClass}>Flat Shipping Rate (EUR)</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={settings.shippingFlatRate}
-                onChange={(e) => handleChange('shippingFlatRate', parseFloat(e.target.value))}
-                className={inputClass}
-              />
-              <p className="text-xs text-gray-400 mt-1">Applied to all orders unless free shipping threshold is met</p>
-            </div>
-            <div>
-              <label className={labelClass}>Free Shipping Threshold (EUR)</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={settings.freeShippingThreshold}
-                onChange={(e) => handleChange('freeShippingThreshold', parseFloat(e.target.value))}
-                className={inputClass}
-              />
-              <p className="text-xs text-gray-400 mt-1">Orders above this amount get free shipping (0 = disabled)</p>
-            </div>
-          </>
-        )}
-
-        {/* Tax */}
-        {activeTab === 'Tax' && (
-          <div>
-            <label className={labelClass}>Tax Rate (%)</label>
-            <input
-              type="number"
-              min="0"
-              max="100"
-              step="0.1"
-              value={settings.taxRate}
-              onChange={(e) => handleChange('taxRate', parseFloat(e.target.value))}
-              className={inputClass}
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              Applied to all orders. Set to 0 to disable tax.
-              {settings.taxRate > 0 && (
-                <span className="ml-1 text-blue-600">
-                  Example: €100 order → tax = €{((100 * settings.taxRate) / 100).toFixed(2)}
-                </span>
-              )}
-            </p>
           </div>
         )}
 
-        {/* Notifications */}
-        {activeTab === 'Notifications' && (
-          <>
+        {/* ── Shipping ── */}
+        {activeTab === 'shipping' && (
+          <div className="p-6 space-y-5">
             <div>
-              <label className={labelClass}>Low Stock Alert Threshold</label>
-              <input
-                type="number"
-                min="1"
-                value={settings.lowStockThreshold}
-                onChange={(e) => handleChange('lowStockThreshold', parseInt(e.target.value))}
-                className={inputClass}
+              <Label hint="Fixed shipping fee applied to all orders">Flat Shipping Rate (EUR)</Label>
+              <Input type="number" min="0" step="0.01" value={settings.shippingFlatRate} onChange={e => set('shippingFlatRate', parseFloat(e.target.value))} />
+            </div>
+            <div>
+              <Label hint="Orders above this value get free shipping. Set 0 to disable.">Free Shipping Threshold (EUR)</Label>
+              <Input type="number" min="0" step="0.01" value={settings.freeShippingThreshold} onChange={e => set('freeShippingThreshold', parseFloat(e.target.value))} />
+              {settings.freeShippingThreshold > 0 && (
+                <div className="mt-2 flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2">
+                  <CheckIcon className="w-3.5 h-3.5" />
+                  Free shipping on orders over {new Intl.NumberFormat('en-DE', { style: 'currency', currency: 'EUR' }).format(settings.freeShippingThreshold)}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Tax ── */}
+        {activeTab === 'tax' && (
+          <div className="p-6 space-y-5">
+            <div>
+              <Label hint="Applied as a percentage to all order totals">Tax Rate (%)</Label>
+              <Input type="number" min="0" max="100" step="0.1" value={settings.taxRate} onChange={e => set('taxRate', parseFloat(e.target.value))} />
+              {settings.taxRate > 0 && (
+                <div className="mt-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-200/60">
+                  <p className="text-xs text-amber-700">
+                    Example: A €100 order will include <strong>€{((100 * settings.taxRate) / 100).toFixed(2)} tax</strong>
+                  </p>
+                </div>
+              )}
+              {settings.taxRate === 0 && (
+                <p className="text-xs text-gray-400 mt-2">Tax is currently disabled (rate is 0%)</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Notifications ── */}
+        {activeTab === 'notifications' && (
+          <div className="p-6 space-y-6">
+            <div>
+              <Label hint="Show low stock alerts when product quantity reaches or falls below this number">Low Stock Threshold</Label>
+              <div className="flex items-center gap-3">
+                <Input type="number" min="1" value={settings.lowStockThreshold} onChange={e => set('lowStockThreshold', parseInt(e.target.value))} />
+                <span className="text-xs text-gray-400 whitespace-nowrap">units</span>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <Toggle
+                checked={settings.notifyOnNewOrder}
+                onChange={e => set('notifyOnNewOrder', e.target.checked)}
+                label="New Order Notifications"
+                hint="Show a notification in the dashboard when a new order is placed"
               />
-              <p className="text-xs text-gray-400 mt-1">
-                Products with stock at or below this number will appear in low stock alerts
-              </p>
+              <Toggle
+                checked={settings.notifyOnLowStock}
+                onChange={e => set('notifyOnLowStock', e.target.checked)}
+                label="Low Stock Notifications"
+                hint={`Alert when any product drops to ${settings.lowStockThreshold} units or below`}
+              />
             </div>
-
-            <div className="space-y-3 pt-2">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.notifyOnNewOrder}
-                  onChange={(e) => handleChange('notifyOnNewOrder', e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600"
-                />
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Notify on New Order</p>
-                  <p className="text-xs text-gray-400">Receive a notification whenever a new order is placed</p>
-                </div>
-              </label>
-
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.notifyOnLowStock}
-                  onChange={(e) => handleChange('notifyOnLowStock', e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600"
-                />
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Notify on Low Stock</p>
-                  <p className="text-xs text-gray-400">Receive a notification when a product reaches low stock threshold</p>
-                </div>
-              </label>
-            </div>
-          </>
+          </div>
         )}
       </div>
 
-      {/* Save Button */}
+      {/* Save button */}
       <button
         onClick={handleSave}
         disabled={saving}
-        className="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+        className={`flex items-center gap-2 h-10 px-6 rounded-xl text-sm font-semibold transition-all duration-200 ${
+          saved
+            ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200'
+            : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200 disabled:opacity-50'
+        }`}
       >
-        {saving && (
-          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-        )}
-        Save Settings
+        {saving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+        {saved ? <><CheckIcon className="w-4 h-4" />Saved!</> : 'Save Changes'}
       </button>
     </div>
   );

@@ -1,58 +1,62 @@
-import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/solid';
-
 /**
  * Stats / KPI Card
- * Displays a metric with optional trend indicator
+ * Modern card with gradient icon background, value, label, and optional trend
  */
+
+const palette = {
+  blue:   { icon: 'from-blue-500 to-blue-600',    ring: 'ring-blue-100',   text: 'text-blue-600' },
+  green:  { icon: 'from-emerald-500 to-emerald-600', ring: 'ring-emerald-100', text: 'text-emerald-600' },
+  yellow: { icon: 'from-amber-400 to-amber-500',  ring: 'ring-amber-100',  text: 'text-amber-600' },
+  purple: { icon: 'from-violet-500 to-violet-600', ring: 'ring-violet-100', text: 'text-violet-600' },
+  red:    { icon: 'from-rose-500 to-rose-600',    ring: 'ring-rose-100',   text: 'text-rose-600' },
+  indigo: { icon: 'from-indigo-500 to-indigo-600', ring: 'ring-indigo-100', text: 'text-indigo-600' },
+};
+
 const StatsCard = ({ title, value, icon: Icon, color = 'blue', trend, trendLabel, loading }) => {
-  const colorMap = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
-    purple: 'bg-purple-50 text-purple-600',
-    red: 'bg-red-50 text-red-600',
-    indigo: 'bg-indigo-50 text-indigo-600',
-  };
+  const p = palette[color] || palette.blue;
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 animate-pulse">
-        <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-        <div className="h-8 bg-gray-200 rounded w-1/3 mb-3"></div>
-        <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+      <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm animate-pulse">
+        <div className="flex items-center justify-between mb-4">
+          <div className="h-3 bg-gray-100 rounded-full w-24" />
+          <div className="w-10 h-10 bg-gray-100 rounded-xl" />
+        </div>
+        <div className="h-7 bg-gray-100 rounded-full w-28 mb-2.5" />
+        <div className="h-3 bg-gray-100 rounded-full w-20" />
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
-        </div>
+    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+      {/* Header row */}
+      <div className="flex items-start justify-between mb-3">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider leading-none pt-1">
+          {title}
+        </p>
         {Icon && (
-          <div className={`p-2.5 rounded-lg ${colorMap[color] || colorMap.blue}`}>
-            <Icon className="w-6 h-6" />
+          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${p.icon} ring-4 ${p.ring} flex items-center justify-center shadow-sm flex-shrink-0`}>
+            <Icon className="w-5 h-5 text-white" />
           </div>
         )}
       </div>
+
+      {/* Value */}
+      <p className="text-2xl font-bold text-gray-900 tracking-tight">{value}</p>
+
+      {/* Trend */}
       {(trend !== undefined || trendLabel) && (
-        <div className="mt-3 flex items-center gap-1">
+        <div className="mt-2 flex items-center gap-1.5">
           {trend !== undefined && (
-            <>
-              {trend >= 0 ? (
-                <ArrowUpIcon className="w-3.5 h-3.5 text-green-500" />
-              ) : (
-                <ArrowDownIcon className="w-3.5 h-3.5 text-red-500" />
-              )}
-              <span className={`text-xs font-medium ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {Math.abs(trend)}%
-              </span>
-            </>
+            <span className={`inline-flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-md ${
+              trend >= 0 ? 'text-emerald-700 bg-emerald-50' : 'text-red-700 bg-red-50'
+            }`}>
+              {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
+            </span>
           )}
           {trendLabel && (
-            <span className="text-xs text-gray-400 ml-1">{trendLabel}</span>
+            <span className="text-xs text-gray-400">{trendLabel}</span>
           )}
         </div>
       )}

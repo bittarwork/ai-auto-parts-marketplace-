@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, PlusIcon, ArrowPathIcon, TrashIcon } from '@heroicons/react/24/outline';
 import DataTable from '../../components/admin/DataTable';
 import ConfirmDeleteModal from '../../components/admin/ConfirmDeleteModal';
 import { getAdminProducts, deleteProduct, bulkUpdateProducts } from '../../services/adminService';
@@ -8,22 +8,29 @@ import toast from 'react-hot-toast';
 
 /**
  * Admin Products Management Page
- * Table with filters, bulk actions, and product CRUD operations
+ * Table with search, bulk actions, and CRUD operations
  */
 
-const formatCurrency = (v) =>
+const fmtCurrency = (v) =>
   new Intl.NumberFormat('en-DE', { style: 'currency', currency: 'EUR' }).format(v);
+
+const StockBadge = ({ stock }) => {
+  if (stock === 0)   return <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200/60"><span className="w-1.5 h-1.5 bg-red-500 rounded-full" />Out of stock</span>;
+  if (stock <= 5)   return <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60"><span className="w-1.5 h-1.5 bg-amber-400 rounded-full" />{stock} low</span>;
+  if (stock <= 20)  return <span className="text-xs font-medium text-gray-600">{stock}</span>;
+  return <span className="text-xs font-medium text-emerald-600">{stock}</span>;
+};
 
 const ProductsPage = () => {
   const navigate = useNavigate();
 
-  const [products, setProducts] = useState([]);
+  const [products, setProducts]     = useState([]);
   const [pagination, setPagination] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]       = useState(true);
 
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState('createdAt');
+  const [search, setSearch]   = useState('');
+  const [page, setPage]       = useState(1);
+  const [sortBy, setSortBy]   = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
 
   const [selectedIds, setSelectedIds] = useState([]);
@@ -53,33 +60,25 @@ const ProductsPage = () => {
     fetchProducts();
   };
 
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedIds(products.map(p => p._id));
-    } else {
-      setSelectedIds([]);
-    }
-  };
+  const allSelected = selectedIds.length === products.length && products.length > 0;
 
-  const handleSelectOne = (id) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
-  };
+  const toggleAll = () =>
+    setSelectedIds(allSelected ? [] : products.map(p => p._id));
 
-  const handleBulkActivate = async (active) => {
+  const toggleOne = (id) =>
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
+  const handleBulk = async (isActive) => {
     try {
-      await bulkUpdateProducts({ ids: selectedIds, updates: { isActive: active } });
-      toast.success(`${selectedIds.length} products ${active ? 'activated' : 'deactivated'}`);
+      await bulkUpdateProducts({ ids: selectedIds, updates: { isActive } });
+      toast.success(`${selectedIds.length} products ${isActive ? 'activated' : 'deactivated'}`);
       setSelectedIds([]);
       fetchProducts();
-    } catch {
-      toast.error('Bulk update failed');
-    }
+    } catch { toast.error('Bulk update failed'); }
   };
 
   const handleDelete = async () => {
-    setDeleteModal(prev => ({ ...prev, loading: true }));
+    setDeleteModal(p => ({ ...p, loading: true }));
     try {
       await deleteProduct(deleteModal.productId);
       toast.success('Product deleted');
@@ -87,7 +86,7 @@ const ProductsPage = () => {
       fetchProducts();
     } catch {
       toast.error('Failed to delete product');
-      setDeleteModal(prev => ({ ...prev, loading: false }));
+      setDeleteModal(p => ({ ...p, loading: false }));
     }
   };
 
@@ -97,48 +96,40 @@ const ProductsPage = () => {
       label: (
         <input
           type="checkbox"
-          onChange={handleSelectAll}
-          checked={selectedIds.length === products.length && products.length > 0}
-          className="rounded border-gray-300"
+          checked={allSelected}
+          onChange={toggleAll}
+          className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 cursor-pointer"
         />
       ),
       render: (row) => (
         <input
           type="checkbox"
           checked={selectedIds.includes(row._id)}
-          onChange={() => handleSelectOne(row._id)}
-          className="rounded border-gray-300"
-          onClick={(e) => e.stopPropagation()}
+          onChange={() => toggleOne(row._id)}
+          onClick={e => e.stopPropagation()}
+          className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 cursor-pointer"
         />
       )
     },
     {
-      key: 'image',
-      label: 'Image',
-      render: (row) => (
-        row.images?.[0]?.url ? (
-          <img
-            src={row.images[0].url}
-            alt=""
-            className="w-10 h-10 object-cover rounded-lg border border-gray-100"
-          />
-        ) : (
-          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-            <span className="text-gray-400 text-xs">N/A</span>
-          </div>
-        )
-      )
-    },
-    {
-      key: 'name',
+      key: 'product',
       label: 'Product',
       sortable: true,
       render: (row) => (
-        <div>
-          <p className="text-sm font-medium text-gray-800 max-w-xs truncate">
-            {row.name?.en || row.name?.ar || '—'}
-          </p>
-          <p className="text-xs text-gray-400">{row.partNumber}</p>
+        <div className="flex items-center gap-3">
+          {/* Thumbnail */}
+          <div className="w-10 h-10 rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex-shrink-0">
+            {row.images?.[0]?.url
+              ? <img src={row.images[0].url} alt="" className="w-full h-full object-cover" />
+              : <div className="w-full h-full flex items-center justify-center text-gray-300 text-lg">📦</div>
+            }
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-800 max-w-[180px] truncate">
+              {row.name?.en || row.name?.ar || '—'}
+            </p>
+            <p className="text-xs text-gray-400 font-mono">{row.partNumber}</p>
+          </div>
         </div>
       )
     },
@@ -146,56 +137,53 @@ const ProductsPage = () => {
       key: 'category',
       label: 'Category',
       render: (row) => (
-        <span className="text-sm text-gray-600">
+        <span className="text-xs text-gray-500">
           {row.category?.name?.en || row.category?.name?.ar || '—'}
         </span>
       )
     },
     {
       key: 'price',
-      label: 'Price (EUR)',
+      label: 'Price',
       sortable: true,
-      render: (row) => (
-        <span className="font-semibold text-gray-800">{formatCurrency(row.price)}</span>
-      )
+      render: (row) => <span className="text-sm font-bold text-gray-900">{fmtCurrency(row.price)}</span>
     },
     {
       key: 'stock',
       label: 'Stock',
       sortable: true,
-      render: (row) => (
-        <span className={`text-sm font-medium ${row.stock <= 5 ? 'text-red-600' : row.stock <= 20 ? 'text-orange-500' : 'text-green-600'}`}>
-          {row.stock}
-        </span>
-      )
+      render: (row) => <StockBadge stock={row.stock} />
     },
     {
       key: 'isActive',
       label: 'Status',
       render: (row) => (
-        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-          row.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${
+          row.isActive
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+            : 'bg-gray-100 text-gray-500 border-gray-200/60'
         }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${row.isActive ? 'bg-emerald-500' : 'bg-gray-400'}`} />
           {row.isActive ? 'Active' : 'Inactive'}
         </span>
       )
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: '',
       render: (row) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => navigate(`/admin/products/${row._id}/edit`)}
-            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+            className="h-7 px-2.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
           >
             Edit
           </button>
           <button
             onClick={() => setDeleteModal({ open: true, productId: row._id, loading: false })}
-            className="text-xs text-red-500 hover:text-red-700 font-medium"
+            className="h-7 w-7 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
           >
-            Delete
+            <TrashIcon className="w-3.5 h-3.5" />
           </button>
         </div>
       )
@@ -204,58 +192,74 @@ const ProductsPage = () => {
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex flex-col lg:flex-row gap-3">
-          <form onSubmit={handleSearch} className="flex-1 flex gap-2">
-            <div className="relative flex-1">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search products, part numbers..."
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <button type="submit" className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
-              Search
-            </button>
-          </form>
-
-          <button
-            onClick={() => navigate('/admin/products/new')}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
-          >
-            <PlusIcon className="w-4 h-4" />
-            Add Product
-          </button>
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">Products</h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {pagination ? `${pagination.total} products` : 'Loading…'}
+          </p>
         </div>
+        <button
+          onClick={() => navigate('/admin/products/new')}
+          className="flex items-center gap-2 h-9 px-4 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200"
+        >
+          <PlusIcon className="w-4 h-4" />
+          Add Product
+        </button>
       </div>
 
-      {/* Bulk Actions Bar */}
+      {/* Search */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-4">
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <div className="relative flex-1">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search products or part numbers…"
+              className="w-full pl-9 pr-4 h-9 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+            />
+          </div>
+          <button type="submit" className="h-9 px-4 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors">
+            Search
+          </button>
+          {search && (
+            <button type="button" onClick={() => { setSearch(''); setPage(1); fetchProducts(); }}
+              className="h-9 px-3 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 flex items-center gap-1 text-sm transition-colors">
+              <ArrowPathIcon className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </form>
+      </div>
+
+      {/* Bulk actions bar */}
       {selectedIds.length > 0 && (
-        <div className="bg-blue-50 rounded-xl border border-blue-200 p-3 flex items-center gap-3">
-          <span className="text-sm font-medium text-blue-700">
-            {selectedIds.length} selected
+        <div className="bg-blue-600 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm shadow-blue-200">
+          <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-xs font-bold">{selectedIds.length}</span>
+          </div>
+          <span className="text-sm font-medium text-white flex-1">
+            {selectedIds.length} product{selectedIds.length > 1 ? 's' : ''} selected
           </span>
           <button
-            onClick={() => handleBulkActivate(true)}
-            className="px-3 py-1.5 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700"
+            onClick={() => handleBulk(true)}
+            className="h-7 px-3 text-xs font-semibold bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
           >
             Activate
           </button>
           <button
-            onClick={() => handleBulkActivate(false)}
-            className="px-3 py-1.5 bg-gray-600 text-white text-xs rounded-lg hover:bg-gray-700"
+            onClick={() => handleBulk(false)}
+            className="h-7 px-3 text-xs font-semibold bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
           >
             Deactivate
           </button>
           <button
             onClick={() => setSelectedIds([])}
-            className="ml-auto text-xs text-gray-500 hover:text-gray-700"
+            className="h-7 px-3 text-xs font-semibold text-blue-200 hover:text-white transition-colors"
           >
-            Clear
+            Cancel
           </button>
         </div>
       )}
@@ -273,14 +277,13 @@ const ProductsPage = () => {
         emptyMessage="No products found"
       />
 
-      {/* Delete Modal */}
       <ConfirmDeleteModal
         isOpen={deleteModal.open}
         onConfirm={handleDelete}
         onCancel={() => setDeleteModal({ open: false, productId: null, loading: false })}
         loading={deleteModal.loading}
         title="Delete Product"
-        message="Are you sure you want to delete this product? This action cannot be undone."
+        message="This will permanently remove the product and cannot be undone."
       />
     </div>
   );
