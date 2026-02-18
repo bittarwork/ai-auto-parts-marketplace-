@@ -11,7 +11,8 @@ import {
   ShoppingBagIcon,
   ArrowRightIcon,
   CalendarDaysIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import {
   CheckCircleIcon,
@@ -31,6 +32,8 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
   const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
   useEffect(() => {
     if (!localStorage.getItem('token')) {
@@ -38,13 +41,14 @@ export default function OrdersPage() {
       return;
     }
     loadOrders();
-  }, [navigate, pagination.page, statusFilter]);
+  }, [navigate, pagination.page, statusFilter, search]);
 
   const loadOrders = async () => {
     setLoading(true);
     try {
       const params = { page: pagination.page, limit: 10 };
       if (statusFilter) params.status = statusFilter;
+      if (search) params.search = search;
       const response = await orderService.getUserOrders(params);
       if (response.success) {
         setOrders(response.data || []);
@@ -141,8 +145,35 @@ export default function OrdersPage() {
           </div>
         </div>
 
-        {/* Filter */}
-        <div className="mb-6 flex flex-wrap items-center gap-4">
+        {/* Search & Filter */}
+        <div className="mb-6 flex flex-col sm:flex-row flex-wrap gap-4">
+          <form
+            onSubmit={(e) => { e.preventDefault(); setSearch(searchInput.trim()); setPagination(p => ({ ...p, page: 1 })); }}
+            className="flex gap-2 flex-1 min-w-0"
+          >
+            <div className="relative flex-1">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search by order number..."
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-dark-border rounded-xl bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all placeholder-gray-400"
+              />
+            </div>
+            <button type="submit" className="px-4 py-2.5 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors">
+              Search
+            </button>
+            {search && (
+              <button
+                type="button"
+                onClick={() => { setSearch(''); setSearchInput(''); setPagination(p => ({ ...p, page: 1 })); }}
+                className="px-3 py-2.5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-bg-secondary transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </form>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Filter:</span>
             <select

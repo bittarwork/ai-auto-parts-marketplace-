@@ -219,7 +219,7 @@ export default function OrderDetailPage() {
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <span className={`px-4 py-2 rounded-xl font-medium capitalize ${
                 order.status === 'delivered' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' :
                 order.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
@@ -228,6 +228,11 @@ export default function OrderDetailPage() {
               }`}>
                 {order.status}
               </span>
+              <Link to="/customer-service">
+                <Button variant="outline" leftIcon={<ChatBubbleLeftRightIcon className="w-4 h-4" />}>
+                  Contact Support
+                </Button>
+              </Link>
               {canCancel && (
                 <Button variant="outline" onClick={() => setShowCancelModal(true)}>
                   Cancel Order
@@ -244,6 +249,16 @@ export default function OrderDetailPage() {
             Order Progress
           </h2>
           <OrderTrackingStepper order={order} />
+          {/* Estimated Delivery - show even before tracking */}
+          {order.estimatedDelivery && order.status !== 'cancelled' && (
+            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-dark-border flex items-center gap-3">
+              <CalendarIcon className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0" />
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Estimated Delivery</p>
+                <p className="font-semibold text-gray-900 dark:text-white">{formatDate(order.estimatedDelivery)}</p>
+              </div>
+            </div>
+          )}
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
