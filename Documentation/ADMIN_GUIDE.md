@@ -25,7 +25,7 @@
 13. [AI & Chatbot Analytics](#13-ai--chatbot-analytics)
 14. [System Settings](#14-system-settings)
 15. [Access Control & Security](#15-access-control--security)
-16. [Required Screenshots Index](#16-required-screenshots-index)
+16. [Screenshots Index](#16-screenshots-index)
 
 ---
 
@@ -63,8 +63,8 @@ The console is accessible at the base route `/admin` and is protected by a route
 
 The Admin Console uses a dedicated full-height layout — the `AdminLayout` — which replaces the storefront header and footer entirely. It consists of two persistent regions: a dark-themed sidebar on the left and a light content area on the right.
 
-> 📸 **[SCREENSHOT REQUIRED — SS-001]**  
-> *Full admin layout — dark sidebar with navigation sections, sticky header with breadcrumbs, and main content area. Desktop view.*
+![Admin Layout](assets/admin/SS-001.png)
+*Full admin layout — dark sidebar with navigation sections, sticky header with breadcrumbs, and main content area. Desktop view.*
 
 ### 2.1 Admin Sidebar
 
@@ -115,8 +115,8 @@ The main content area to the right of the sidebar is a scrollable region where a
 
 The Overview Dashboard is the landing page of the admin console. It provides an at-a-glance summary of platform health through KPI metrics, trend charts, and actionable summaries.
 
-> 📸 **[SCREENSHOT REQUIRED — SS-002]**  
-> *Overview Dashboard — full view showing time-based greeting, KPI cards row, revenue area chart, order status bar chart, recent orders list, low stock alerts, and top selling products panel.*
+![Overview Dashboard](assets/admin/SS-002.png)
+*Overview Dashboard — full view showing time-based greeting, KPI cards row, revenue area chart, order status bar chart, recent orders list, low stock alerts, and top selling products panel.*
 
 ### 3.1 Personalised Greeting
 
@@ -185,8 +185,8 @@ Two primary action buttons in the header of the recent orders section provide di
 
 The Orders Management page provides a complete, searchable, and filterable view of all orders placed on the platform. It is the primary tool for day-to-day order processing and customer service activities.
 
-> 📸 **[SCREENSHOT REQUIRED — SS-003]**  
-> *Orders Management page — quick stats badges at top, search bar, status and payment filters, sortable orders table with overdue indicators, status badges, and pagination controls.*
+![Orders Management](assets/admin/SS-003.png)
+*Orders Management page — quick stats badges at top, search bar, status and payment filters, sortable orders table with overdue indicators, status badges, and pagination controls.*
 
 ### 4.1 Quick Stats Badges
 
@@ -252,8 +252,8 @@ Orders are paginated at 20 records per page. Navigation controls at the bottom o
 
 The Order Detail page is the primary workspace for managing the full lifecycle of an individual order — from acknowledgement through to delivery. It consolidates all relevant order data and provides tools for updating every aspect of the fulfilment process.
 
-> 📸 **[SCREENSHOT REQUIRED — SS-004]**  
-> *Order Detail page — full view showing order header with status badges, order items table, status timeline, tracking information form, customer and shipping sidebar, status update controls, admin notes, and print button.*
+![Order Detail](assets/admin/SS-004.png)
+*Order Detail page — full view showing order header with status badges, order items table, status timeline, tracking information form, customer and shipping sidebar, status update controls, admin notes, and print button.*
 
 ### 5.1 Order Header
 
@@ -338,8 +338,8 @@ A sidebar on the right side of the page displays two information cards:
 
 The Products Management page provides a full listing of all product catalogue entries with search, filtering, bulk operations, and individual record actions.
 
-> 📸 **[SCREENSHOT REQUIRED — SS-005]**  
-> *Products Management page — search bar, bulk selection checkboxes, bulk action controls, sortable product table with thumbnail, part number, category, price, stock colour-coding, and active/inactive status badges, plus pagination.*
+![Products Management](assets/admin/SS-005.png)
+*Products Management page — search bar, bulk selection checkboxes, bulk action controls, sortable product table with thumbnail, part number, category, price, stock colour-coding, and active/inactive status badges, plus pagination.*
 
 ### 6.1 Search
 
@@ -560,8 +560,8 @@ This allows administrators to quickly review a user's purchase history without n
 
 The Categories Management page provides a full hierarchical editor for the product taxonomy, supporting tree and list views and full CRUD operations on category nodes.
 
-> 📸 **[SCREENSHOT REQUIRED — SS-006]**  
-> *Categories Management page — statistics cards row, view mode toggle (Tree/List), search bar, expandable tree view with depth colour coding, children and product count badges, and the Add Category modal with bilingual fields and parent selector.*
+![Categories Management](assets/admin/SS-006.png)
+*Categories Management page — statistics cards row, view mode toggle (Tree/List), search bar, expandable tree view with depth colour coding, children and product count badges, and the Add Category modal with bilingual fields and parent selector.*
 
 ### 10.1 Statistics Cards
 
@@ -669,8 +669,8 @@ Suppliers are paginated at 20 records per page.
 
 The Analytics page provides visual reporting across revenue, order activity, and user growth, enabling data-informed management decisions.
 
-> 📸 **[SCREENSHOT REQUIRED — SS-007]**  
-> *Analytics page — period selector (Daily/Weekly/Monthly), dual-axis revenue and orders bar chart, orders by status donut chart, orders by payment status donut chart, user growth line chart, and top 10 selling products table.*
+![Analytics](assets/admin/SS-007.png)
+*Analytics page — period selector (Daily/Weekly/Monthly), dual-axis revenue and orders bar chart, orders by status donut chart, orders by payment status donut chart, user growth line chart, and top 10 selling products table.*
 
 ### 12.1 Period Selector
 
@@ -756,8 +756,8 @@ This list provides a rapid audit trail of recent chatbot activity, useful for qu
 
 The Settings page provides centralised configuration for all platform-wide operational parameters, organised into four tabbed sections.
 
-> 📸 **[SCREENSHOT REQUIRED — SS-008]**  
-> *Settings page — tab navigation bar (General, Shipping, Tax, Notifications) with the General tab active, showing Site Name, Contact Email, Currency, and Default Language fields, and the Save Changes button.*
+![System Settings](assets/admin/SS-008.png)
+*Settings page — tab navigation bar (General, Shipping, Tax, Notifications) with the General tab active, showing Site Name, Contact Email, Currency, and Default Language fields, and the Save Changes button.*
 
 ### 14.1 General Tab
 
@@ -820,22 +820,22 @@ The admin console is entirely invisible to non-administrator users. No navigatio
 
 ---
 
-## 16. Required Screenshots Index
+## 16. Screenshots Index
 
-| ID | Description | Page / Section |
-|---|---|---|
-| **SS-001** | Admin layout — dark sidebar with all navigation sections, sticky header with breadcrumbs, and light content area | Admin Layout |
-| **SS-002** | Overview Dashboard — KPI cards, revenue chart, order status chart, recent orders list, low stock alerts, and top products | Dashboard |
-| **SS-003** | Orders Management — quick stats, search/filter controls, sortable table with overdue indicators and status badges | Orders |
-| **SS-004** | Order Detail — order items, status timeline, tracking form, status update controls, admin notes, and customer sidebar | Order Detail |
-| **SS-005** | Products Management — bulk selection, sortable table with stock colour-coding, status badges, and individual actions | Products |
-| **SS-006** | Categories Management — statistics cards, tree view with depth badges and product counts, and Add Category modal | Categories |
-| **SS-007** | Analytics — period selector, dual-axis revenue/orders chart, status donut charts, user growth line chart, top products table | Analytics |
-| **SS-008** | Settings — tab navigation with General tab active showing all configuration fields and Save Changes button | Settings |
+| ID | Description | Page / Section | Asset |
+|---|---|---|---|
+| **SS-001** | Admin layout — dark sidebar with all navigation sections, sticky header with breadcrumbs, and light content area | Admin Layout | [assets/admin/SS-001.png](assets/admin/SS-001.png) |
+| **SS-002** | Overview Dashboard — KPI cards, revenue chart, order status chart, recent orders list, low stock alerts, and top products | Dashboard | [assets/admin/SS-002.png](assets/admin/SS-002.png) |
+| **SS-003** | Orders Management — quick stats, search/filter controls, sortable table with overdue indicators and status badges | Orders | [assets/admin/SS-003.png](assets/admin/SS-003.png) |
+| **SS-004** | Order Detail — order items, status timeline, tracking form, status update controls, admin notes, and customer sidebar | Order Detail | [assets/admin/SS-004.png](assets/admin/SS-004.png) |
+| **SS-005** | Products Management — bulk selection, sortable table with stock colour-coding, status badges, and individual actions | Products | [assets/admin/SS-005.png](assets/admin/SS-005.png) |
+| **SS-006** | Categories Management — statistics cards, tree view with depth badges and product counts, and Add Category modal | Categories | [assets/admin/SS-006.png](assets/admin/SS-006.png) |
+| **SS-007** | Analytics — period selector, dual-axis revenue/orders chart, status donut charts, user growth line chart, top products table | Analytics | [assets/admin/SS-007.png](assets/admin/SS-007.png) |
+| **SS-008** | Settings — tab navigation with General tab active showing all configuration fields and Save Changes button | Settings | [assets/admin/SS-008.png](assets/admin/SS-008.png) |
 
 ---
 
-*Total Screenshots Required: **8***
+*Total Screenshots: **8** (stored in `Documentation/assets/admin/`)*
 
 ---
 

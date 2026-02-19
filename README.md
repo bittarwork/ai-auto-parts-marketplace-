@@ -111,6 +111,15 @@ This platform was designed and developed specifically for a **Saudi Arabian comp
 - Interactive address map picker with reverse geocoding (Leaflet + OpenStreetMap).
 - Print-formatted invoice generation from the order detail page.
 
+### Platform Screenshots
+
+| Storefront | AI-Powered Search | Admin Console |
+|:----------:|:-----------------:|:-------------:|
+| ![Home Page](Documentation/assets/User/SS-002.png) | ![AI Search Results](Documentation/assets/User/SS-003.png) | ![Admin Dashboard](Documentation/assets/admin/SS-002.png) |
+| *Hero, search bar, brands grid* | *NLP analysis, filters, product grid* | *KPIs, revenue chart, orders* |
+| ![Product Details](Documentation/assets/User/SS-004.png) | ![AI Chatbot](Documentation/assets/User/SS-008.png) | |
+| *Gallery, compatibility, specs* | *Context-aware assistant* | |
+
 ---
 
 ## 4. Technology Stack
