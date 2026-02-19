@@ -33,10 +33,11 @@
 12. [Admin Console](#12-admin-console)
 13. [User-Facing Storefront](#13-user-facing-storefront)
 14. [Running the Project Locally](#14-running-the-project-locally)
-15. [Environment Variables](#15-environment-variables)
-16. [Production Readiness Status](#16-production-readiness-status)
-17. [Usage & Licensing](#17-usage--licensing)
-18. [About the Author](#18-about-the-author)
+15. [Database Seed & Demo Data](#15-database-seed--demo-data)
+16. [Environment Variables](#16-environment-variables)
+17. [Production Readiness Status](#17-production-readiness-status)
+18. [Usage & Licensing](#18-usage--licensing)
+19. [About the Author](#19-about-the-author)
 
 ---
 
@@ -238,7 +239,8 @@ ai-auto-parts-marketplace/
 │
 └── Documentation/
     ├── USER_GUIDE.md               # End-user interface documentation
-    └── ADMIN_GUIDE.md              # Administrator console documentation
+    ├── ADMIN_GUIDE.md              # Administrator console documentation
+    └── SEED_GUIDE.md               # Database seed & demo data documentation
 ```
 
 ---
@@ -469,7 +471,40 @@ After running the seed script, a default administrator account is created. Crede
 
 ---
 
-## 15. Environment Variables
+## 15. Database Seed & Demo Data
+
+The project includes a comprehensive seed script that populates the database with realistic demo data to exercise all platform capabilities.
+
+| Collection | Count | Description |
+|---|---|---|
+| **Settings** | 1 | Site config (EUR, shipping €12, free shipping at €150, tax 19%) |
+| **Users** | 15 | 1 Admin + 3 Suppliers + 11 Customers |
+| **Categories** | 25 | 8 main + 17 subcategories (hierarchical) |
+| **Products** | 44 | Parts with compatibility data for all Chinese brands |
+| **Vehicles** | 18 | User-owned vehicles across Chery, Geely, MG, Haval, BYD, etc. |
+| **Orders** | 10 | All statuses: delivered, shipped, processing, confirmed, cancelled, pending |
+| **Carts** | 6 | Active carts with multiple items |
+| **Wishlists** | 10 | Product wishlists per customer |
+| **ChatSessions** | 5 | AI chatbot conversation history |
+| **ProductNotifications** | 5 | Back-in-stock subscriptions |
+
+### Login Credentials (after seed)
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@autoparts.com` | `Admin@2024!` |
+| Supplier | `supplier1@autoparts.com` | `Supplier@2024!` |
+| Customer | `ahmed@example.com` | `Customer@2024!` |
+
+All customers use `Customer@2024!`; all suppliers use `Supplier@2024!`.
+
+For complete seed documentation — including all user emails, category breakdown, and data relationships — see:
+
+**[Database Seed Guide](Documentation/SEED_GUIDE.md)**
+
+---
+
+## 16. Environment Variables
 
 The backend requires a `.env` file in the `backend/` directory. A `.env` file is **not included** in this repository for security reasons.
 
@@ -499,7 +534,7 @@ FRONTEND_URL=http://localhost:5173
 
 ---
 
-## 16. Production Readiness Status
+## 17. Production Readiness Status
 
 > **This project is explicitly NOT ready for production deployment.**
 
@@ -523,7 +558,7 @@ It is a portfolio-grade demonstration build. The following areas would require s
 
 ---
 
-## 17. Usage & Licensing
+## 18. Usage & Licensing
 
 ```
 Copyright (c) 2026 — All Rights Reserved
@@ -551,7 +586,7 @@ Any use of this code beyond passive viewing — including cloning for local exec
 
 ---
 
-## 18. About the Author
+## 19. About the Author
 
 This project was independently designed, architected, and developed as a showcase of full-stack development capabilities including:
 
