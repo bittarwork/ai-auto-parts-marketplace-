@@ -9,7 +9,6 @@ import {
   TrashIcon,
   ArrowLeftIcon,
   ChevronRightIcon,
-  ShoppingCartIcon,
   CubeIcon
 } from '@heroicons/react/24/outline';
 import chatbotService from '../../services/chatbotService';
