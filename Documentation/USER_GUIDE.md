@@ -57,8 +57,7 @@ The platform serves customers who own Chinese vehicles from brands including **C
 
 The header is permanently fixed at the top of every page across the platform, ensuring that core navigation remains accessible regardless of how far a user has scrolled down any given page.
 
-> 📸 **[SCREENSHOT REQUIRED — SS-001]**  
-> *Full-width header in Light Mode, desktop view, showing logo, navigation links, and all action icons.*
+![SS-001 — Full-width header in Light Mode, desktop view](assets/User/SS-001.png)
 
 ### 2.1 Logo & Brand Identity
 
@@ -117,8 +116,7 @@ The Home Page serves as the primary entry point to the platform. It is structure
 
 **URL:** `/`
 
-> 📸 **[SCREENSHOT REQUIRED — SS-002]**  
-> *Full Home Page above the fold — Hero section with search bar, supported brands grid, and feature cards, in Light Mode.*
+![SS-002 — Full Home Page above the fold: Hero section with search bar, brands grid, and feature cards](assets/User/SS-002.png)
 
 ### 3.1 Hero Section
 
@@ -206,8 +204,7 @@ The Search Results Page displays products matching a user's query, enhanced by t
 
 **URL:** `/search?q={query}`
 
-> 📸 **[SCREENSHOT REQUIRED — SS-003]**  
-> *Search Results Page — full view showing NLP analysis card with extracted entity badges, filters panel, and product grid.*
+![SS-003 — Search Results Page: NLP analysis card, filters panel, and product grid](assets/User/SS-003.png)
 
 ### 5.1 AI Understanding Card (NLP Analysis)
 
@@ -291,8 +288,7 @@ The Product Details Page provides an exhaustive view of a single product, encomp
 
 **URL:** `/products/{product-id}`
 
-> 📸 **[SCREENSHOT REQUIRED — SS-004]**  
-> *Product Details Page — full view in Light Mode, showing image gallery, price, action buttons, compatibility section, and product specifications.*
+![SS-004 — Product Details Page: image gallery, price, action buttons, compatibility section, and specifications](assets/User/SS-004.png)
 
 ### 8.1 Breadcrumb Navigation
 
@@ -383,8 +379,7 @@ The Shopping Cart page provides a complete review of all items selected for purc
 
 **URL:** `/cart`
 
-> 📸 **[SCREENSHOT REQUIRED — SS-005]**  
-> *Shopping Cart page — full view with cart item cards (showing quantity controls, unit price, and item total) alongside the order summary sidebar (Subtotal, Shipping, Tax, Grand Total).*
+![SS-005 — Shopping Cart: item cards with quantity controls and order summary sidebar](assets/User/SS-005.png)
 
 ### 9.1 Cart Header
 
@@ -437,8 +432,7 @@ The Checkout Page guides the user through a structured two-step process to compl
 
 **URL:** `/checkout`
 
-> 📸 **[SCREENSHOT REQUIRED — SS-006]**  
-> *Checkout Page — Step 1 (Shipping Information) showing saved address cards and address form fields, alongside the persistent order summary sidebar.*
+![SS-006 — Checkout Step 1: Shipping Information with saved address cards and address form](assets/User/SS-006.png)
 
 ### 10.1 Progress Indicator
 
@@ -544,8 +538,7 @@ Upon following the reset link received by email, users are presented with a form
 
 The Dashboard serves as the central hub of the user's account, providing a consolidated overview of all account areas with quick-access navigation cards.
 
-> 📸 **[SCREENSHOT REQUIRED — SS-007]**  
-> *User Dashboard — full view showing personalised welcome banner, four quick-access navigation cards (Profile, Orders, Wishlist, Vehicles), AI recommendations grid, and recent orders table with colour-coded status badges.*
+![SS-007 — User Dashboard: welcome banner, navigation cards, AI recommendations, and recent orders table](assets/User/SS-007.png)
 
 ### 12.1 Welcome Banner
 
@@ -806,8 +799,7 @@ The wishlist is synchronised with the header icon badge in real-time. Adding or 
 
 The AI Chatbot is a persistent floating widget available on every page of the platform. It functions as a conversational assistant capable of answering product questions, guiding users through the search process, providing policy information, and suggesting relevant products.
 
-> 📸 **[SCREENSHOT REQUIRED — SS-008]**  
-> *AI Chatbot — floating button in the bottom-right corner with green online indicator (left), and chat window open showing welcome message, quick-action buttons, a conversation thread with a product card suggestion, and the chat history panel (right).*
+![SS-008 — AI Chatbot: floating button with online indicator, open chat window with conversation and product card](assets/User/SS-008.png)
 
 ### 17.1 Opening the Chat
 
@@ -958,18 +950,18 @@ The platform is fully responsive and adapts its layout for three screen size cat
 
 ---
 
-## 20. Required Screenshots Index
+## 20. Screenshots Index
 
-| ID | Description | Page / Section |
-|---|---|---|
-| **SS-001** | Full header — Light Mode, desktop (logo, navigation links, all action icons) | Header |
-| **SS-002** | Home Page — hero section with search bar, popular pills, feature cards, and brands grid | Home Page |
-| **SS-003** | Search Results Page — NLP analysis card, filters panel, and product grid | Search Results |
-| **SS-004** | Product Details Page — image gallery, price, action buttons, compatibility, and specs | Product Details |
-| **SS-005** | Shopping Cart — item cards with quantity controls and order summary sidebar | Cart |
-| **SS-006** | Checkout — Step 1 (Shipping) with saved addresses and address form | Checkout |
-| **SS-007** | User Dashboard — welcome banner, navigation cards, recommendations, and recent orders table | Dashboard |
-| **SS-008** | AI Chatbot — floating button, open chat window, conversation with product card, and history panel | Chatbot |
+| ID | Screenshot | Description | Page / Section |
+|---|---|---|---|
+| **SS-001** | ![SS-001](assets/User/SS-001.png) | Full header — Light Mode, desktop (logo, navigation links, all action icons) | Header |
+| **SS-002** | ![SS-002](assets/User/SS-002.png) | Home Page — hero section with search bar, popular pills, feature cards, and brands grid | Home Page |
+| **SS-003** | ![SS-003](assets/User/SS-003.png) | Search Results Page — NLP analysis card, filters panel, and product grid | Search Results |
+| **SS-004** | ![SS-004](assets/User/SS-004.png) | Product Details Page — image gallery, price, action buttons, compatibility, and specs | Product Details |
+| **SS-005** | ![SS-005](assets/User/SS-005.png) | Shopping Cart — item cards with quantity controls and order summary sidebar | Cart |
+| **SS-006** | ![SS-006](assets/User/SS-006.png) | Checkout — Step 1 (Shipping) with saved addresses and address form | Checkout |
+| **SS-007** | ![SS-007](assets/User/SS-007.png) | User Dashboard — welcome banner, navigation cards, recommendations, and recent orders table | Dashboard |
+| **SS-008** | ![SS-008](assets/User/SS-008.png) | AI Chatbot — floating button, open chat window, conversation with product card, and history panel | Chatbot |
 
 ---
 
