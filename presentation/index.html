@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RedParts - Final Year Project Presentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">RedParts - FYP Defense</div>
+        <div class="topbar-right">
+          <span id="slideCounter">1 / 12</span>
+          <button id="fullscreenBtn" class="btn">Fullscreen</button>
+        </div>
+      </header>
+
+      <main id="slides" class="slides">
+        <section class="slide active">
+          <p class="tag">Arab Open University - Riyadh Branch</p>
+          <h1>RedParts</h1>
+          <h2>AI-Supported E-Commerce Platform for Chinese Auto Parts</h2>
+          <div class="meta-grid">
+            <div class="card">
+              <h3>Student</h3>
+              <p>Abdullah Almonther Bin Othman</p>
+            </div>
+            <div class="card">
+              <h3>Student ID</h3>
+              <p>23511844</p>
+            </div>
+            <div class="card">
+              <h3>Supervisor</h3>
+              <p>Basil Kasasbeh</p>
+            </div>
+            <div class="card">
+              <h3>Department</h3>
+              <p>Information Technology and Computing</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide">
+          <h2>Problem Statement</h2>
+          <ul>
+            <li>Customers struggle to find compatible Chinese auto parts online.</li>
+            <li>Most platforms rely on basic keyword search and manual support.</li>
+            <li>Compatibility errors lead to wrong purchases and extra costs.</li>
+            <li>Limited intelligent guidance reduces trust and conversion.</li>
+          </ul>
+          <div class="highlight">
+            <strong>Project Goal:</strong> Build a domain-specific platform that combines
+            e-commerce workflows with practical AI assistance.
+          </div>
+        </section>
+
+        <section class="slide">
+          <h2>Project Objectives</h2>
+          <div class="cols-2">
+            <div class="card">
+              <h3>Implemented Objectives</h3>
+              <ul>
+                <li>AI-assisted natural language search</li>
+                <li>Context-aware chatbot support</li>
+                <li>Vehicle compatibility verification</li>
+                <li>Personalized recommendations</li>
+                <li>Admin dashboard and analytics</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Future Objectives</h3>
+              <ul>
+                <li>Live payment gateway integration</li>
+                <li>Full Arabic RTL localization</li>
+                <li>Product reviews and ratings</li>
+                <li>Predictive demand forecasting</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide image-slide">
+          <h2>Overall System Architecture</h2>
+          <img
+            src="../DIAGRAM/RedParts Overall System Architecture.png"
+            alt="RedParts Overall System Architecture"
+          />
+        </section>
+
+        <section class="slide image-slide">
+          <h2>Backend and Frontend Architecture</h2>
+          <div class="image-grid">
+            <figure>
+              <img src="../DIAGRAM/RedParts Backend API Architecture.png" alt="Backend Architecture" />
+              <figcaption>Backend API Architecture</figcaption>
+            </figure>
+            <figure>
+              <img
+                src="../DIAGRAM/RedParts Frontend Application Architecture.png"
+                alt="Frontend Architecture"
+              />
+              <figcaption>Frontend Application Architecture</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section class="slide image-slide">
+          <h2>AI Search Flow</h2>
+          <img src="../DIAGRAM/NLP Search System – Sequence Diagram.png" alt="NLP Search Sequence Diagram" />
+        </section>
+
+        <section class="slide image-slide">
+          <h2>Chatbot Flow</h2>
+          <img src="../DIAGRAM/Chatbot System – Sequence Diagram.png" alt="Chatbot Sequence Diagram" />
+        </section>
+
+        <section class="slide image-slide">
+          <h2>Recommendation Engine</h2>
+          <img
+            src="../DIAGRAM/Recommendation Engine – Activity Diagram.png"
+            alt="Recommendation Engine Activity Diagram"
+          />
+          <p class="note">
+            Recommendation logic combines compatibility, order history, and popularity signals with caching.
+          </p>
+        </section>
+
+        <section class="slide image-slide">
+          <h2>Design, Implementation, and Testing Framework</h2>
+          <img
+            src="../DIAGRAM/Conceptual Framework of Design, Implementation, and Testing.png"
+            alt="Design Implementation Testing Framework"
+          />
+        </section>
+
+        <section class="slide image-slide">
+          <h2>Testing and Evaluation</h2>
+          <img src="../DIAGRAM/RedParts Testing Strategy Framework.png" alt="Testing Strategy Framework" />
+          <ul>
+            <li>Functional scenario validation across core user journeys</li>
+            <li>Integration checks for API flow and AI modules</li>
+            <li>User acceptance evaluation with representative users</li>
+          </ul>
+        </section>
+
+        <section class="slide image-slide">
+          <h2>Results and Contributions</h2>
+          <div class="image-grid">
+            <figure>
+              <img
+                src="../DIAGRAM/Conceptual Framework of Results and Discussion.png"
+                alt="Results and Discussion Framework"
+              />
+              <figcaption>Results and Discussion Framework</figcaption>
+            </figure>
+            <figure>
+              <img
+                src="../DIAGRAM/RedParts Project Contribution Summary.png"
+                alt="Project Contribution Summary"
+              />
+              <figcaption>Project Contribution Summary</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section class="slide">
+          <h2>Conclusion and Future Work</h2>
+          <div class="cols-2">
+            <div class="card">
+              <h3>Key Achievements</h3>
+              <ul>
+                <li>Working full-stack platform with AI-assisted capabilities</li>
+                <li>Reduced part-selection risk through compatibility checks</li>
+                <li>Practical architecture for domain-specific e-commerce</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Next Steps</h3>
+              <ul>
+                <li>Production-grade payment integration</li>
+                <li>Complete Arabic and RTL UX</li>
+                <li>Forecasting and advanced supplier analytics</li>
+                <li>Reviews, notifications, and mobile app extension</li>
+              </ul>
+            </div>
+          </div>
+          <p class="thank-you">Thank You - Questions?</p>
+        </section>
+      </main>
+
+      <footer class="controls">
+        <button id="prevBtn" class="btn">Previous</button>
+        <div class="progress-wrap">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+        <button id="nextBtn" class="btn btn-primary">Next</button>
+      </footer>
+    </div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
