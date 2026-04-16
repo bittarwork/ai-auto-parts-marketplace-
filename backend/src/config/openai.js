@@ -1,5 +1,8 @@
-// OpenAI GPT-4 configuration for AI features
+// OpenAI configuration for AI features
 const OpenAI = require('openai');
+
+// Default model can be overridden from environment variables.
+const DEFAULT_OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -146,15 +149,15 @@ Output: {"category": "brake system", "features": ["ceramic material", "Chery com
 };
 
 /**
- * Helper function to call GPT-4 with error handling and retries
+ * Helper function to call OpenAI chat completion with error handling and retries
  * @param {Array} messages - Array of message objects {role, content}
  * @param {Object} options - Configuration options
- * @returns {Promise<string>} GPT-4 response
+ * @returns {Promise<string>} Model response text
  */
 async function callGPT4(messages, options = {}) {
   try {
     const response = await openai.chat.completions.create({
-      model: options.model || 'gpt-4-turbo-preview',
+      model: options.model || DEFAULT_OPENAI_MODEL,
       messages,
       temperature: options.temperature !== undefined ? options.temperature : 0.3,
       max_tokens: options.maxTokens || 500,
@@ -203,7 +206,7 @@ async function testConnection() {
     checkAPIKey();
     
     const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: DEFAULT_OPENAI_MODEL,
       messages: [{ role: 'user', content: 'test' }],
       max_tokens: 5
     });
