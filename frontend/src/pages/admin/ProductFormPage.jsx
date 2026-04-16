@@ -27,6 +27,49 @@ const EMPTY_FORM = {
   compatibility: []
 };
 
+const getLocalizedText = (value) => {
+  if (typeof value === 'string' || typeof value === 'number') {
+    return String(value);
+  }
+
+  if (value && typeof value === 'object') {
+    return value.en || value.ar || '';
+  }
+
+  return '';
+};
+
+const normalizeLocalizedField = (value) => {
+  if (value && typeof value === 'object') {
+    return {
+      en: value.en || '',
+      ar: value.ar || ''
+    };
+  }
+
+  const textValue = getLocalizedText(value);
+
+  return {
+    en: textValue,
+    ar: ''
+  };
+};
+
+const normalizeSpecifications = (specifications = []) =>
+  specifications.map((spec) => ({
+    key: normalizeLocalizedField(spec?.key),
+    value: normalizeLocalizedField(spec?.value)
+  }));
+
+const normalizeCompatibility = (compatibility = []) =>
+  compatibility.map((item) => ({
+    ...item,
+    brand: getLocalizedText(item?.brand),
+    model: getLocalizedText(item?.model),
+    yearFrom: item?.yearFrom || '',
+    yearTo: item?.yearTo || ''
+  }));
+
 const ProductFormPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -58,20 +101,20 @@ const ProductFormPage = () => {
           const res = await api.get(`/products/${id}`);
           const p = res.data || res.product || res;
           setForm({
-            name: p.name || { en: '', ar: '' },
-            description: p.description || { en: '', ar: '' },
+            name: normalizeLocalizedField(p.name),
+            description: normalizeLocalizedField(p.description),
             partNumber: p.partNumber || '',
             category: p.category?._id || p.category || '',
             price: p.price || '',
             originalPrice: p.originalPrice || '',
             stock: p.stock || '',
             supplier: p.supplier?._id || p.supplier || '',
-            brand: p.brand || '',
+            brand: getLocalizedText(p.brand),
             condition: p.condition || 'new',
             isFeatured: p.isFeatured || false,
             isActive: p.isActive !== undefined ? p.isActive : true,
-            specifications: p.specifications || [],
-            compatibility: p.compatibility || []
+            specifications: normalizeSpecifications(p.specifications),
+            compatibility: normalizeCompatibility(p.compatibility)
           });
         } catch {
           toast.error('Failed to load product');
@@ -133,6 +176,13 @@ const ProductFormPage = () => {
     try {
       const payload = {
         ...form,
+        name: normalizeLocalizedField(form.name),
+        description: normalizeLocalizedField(form.description),
+        specifications: form.specifications.map((spec) => ({
+          key: normalizeLocalizedField(spec?.key),
+          value: normalizeLocalizedField(spec?.value)
+        })),
+        compatibility: normalizeCompatibility(form.compatibility),
         price: parseFloat(form.price),
         originalPrice: form.originalPrice ? parseFloat(form.originalPrice) : undefined,
         stock: parseInt(form.stock)
@@ -353,7 +403,9 @@ const ProductFormPage = () => {
 
         {form.specifications.map((spec, i) => (
           <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-            <span className="text-xs font-medium text-gray-600 flex-1">{spec.key}: {spec.value}</span>
+            <span className="text-xs font-medium text-gray-600 flex-1">
+              {getLocalizedText(spec.key)}: {getLocalizedText(spec.value)}
+            </span>
             <button
               type="button"
               onClick={() => removeSpec(i)}
