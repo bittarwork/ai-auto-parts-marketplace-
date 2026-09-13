@@ -1,5 +1,5 @@
 {
-  "appName": "Chinese Auto Parts",
+  "appName": "EV Auto Parts",
   "welcome": "Welcome",
   "loading": "Loading...",
   "error": "Error",
@@ -69,5 +69,5 @@
   "privacyPolicy": "Privacy Policy",
   "aboutUs": "About Us",
   "faq": "FAQ",
-  "copyrightNotice": "© 2026 Chinese Auto Parts. All rights reserved."
+  "copyrightNotice": "© 2026 EV Auto Parts. All rights reserved."
 }

@@ -1,6 +1,7 @@
 const { openai, prompts, callGPT4 } = require('../config/openai');
 const { cacheHelper, cacheKeys } = require('../config/redis');
 const { redis } = require('../config/redis');
+const { BRAND_ALIASES, ARABIC_BRAND_NAMES, MODEL_ALIASES } = require('../config/evCatalog');
 
 class NLPProcessorService {
   
@@ -90,49 +91,7 @@ class NLPProcessorService {
   normalizeBrand(brand) {
     if (!brand) return null;
     
-    const brandMap = {
-      // Chery variations
-      'chery': 'Chery',
-      'شيري': 'Chery',
-      'شيرى': 'Chery',
-      
-      // Geely variations
-      'geely': 'Geely',
-      'جيلي': 'Geely',
-      'جيلى': 'Geely',
-      
-      // MG variations
-      'mg': 'MG',
-      'ام جي': 'MG',
-      'ام جى': 'MG',
-      'إم جي': 'MG',
-      
-      // Haval variations
-      'haval': 'Haval',
-      'هافال': 'Haval',
-      'هافل': 'Haval',
-      'هفال': 'Haval',
-      
-      // Great Wall variations
-      'great wall': 'Great Wall',
-      'greatwall': 'Great Wall',
-      'جريت وول': 'Great Wall',
-      'جريت ول': 'Great Wall',
-      
-      // Changan variations
-      'changan': 'Changan',
-      'chang an': 'Changan',
-      'شانجان': 'Changan',
-      'شانغان': 'Changan',
-      'تشانجان': 'Changan',
-      
-      // BYD variations
-      'byd': 'BYD',
-      'بي واي دي': 'BYD',
-      'بى واى دى': 'BYD'
-    };
-    
-    const normalized = brandMap[brand.toLowerCase()];
+    const normalized = BRAND_ALIASES[brand.toLowerCase().trim()];
     return normalized || brand;
   }
   
@@ -142,36 +101,8 @@ class NLPProcessorService {
   normalizeModel(model, brand) {
     if (!model) return null;
     
-    // Common model name mappings
-    const modelMaps = {
-      'Chery': {
-        'tiggo': 'Tiggo',
-        'تيجو': 'Tiggo',
-        'arrizo': 'Arrizo',
-        'اريزو': 'Arrizo'
-      },
-      'Geely': {
-        'coolray': 'Coolray',
-        'كول راي': 'Coolray',
-        'emgrand': 'Emgrand',
-        'امجراند': 'Emgrand'
-      },
-      'MG': {
-        'hs': 'HS',
-        'اتش اس': 'HS',
-        'zs': 'ZS',
-        'زد اس': 'ZS'
-      },
-      'Haval': {
-        'jolion': 'Jolion',
-        'جوليون': 'Jolion',
-        'h6': 'H6',
-        'اتش 6': 'H6'
-      }
-    };
-    
-    if (brand && modelMaps[brand]) {
-      const normalized = modelMaps[brand][model.toLowerCase()];
+    if (brand && MODEL_ALIASES[brand]) {
+      const normalized = MODEL_ALIASES[brand][model.toLowerCase().trim()];
       return normalized || model;
     }
     
@@ -218,28 +149,19 @@ class NLPProcessorService {
     const queryLower = query.toLowerCase();
     const words = queryLower.split(/\s+/);
     
-    // Known brands (English and Arabic)
-    const brandKeywords = [
-      'chery', 'شيري',
-      'geely', 'جيلي',
-      'mg', 'ام جي',
-      'haval', 'هافال', 'هافل',
-      'great wall', 'جريت وول',
-      'changan', 'شانجان',
-      'byd', 'بي واي دي'
-    ];
+    const brandKeywords = Object.keys(BRAND_ALIASES);
     
-    // Known part types (English and Arabic)
     const partTypeKeywords = {
-      'oil filter': ['filter', 'فلتر', 'فيلتر', 'oil'],
-      'brake pad': ['brake', 'فرامل', 'فرملة', 'pad', 'فحمات'],
-      'spark plug': ['spark', 'plug', 'بوجيه', 'بواجي'],
-      'belt': ['belt', 'سير', 'حزام'],
       'battery': ['battery', 'بطارية'],
-      'tire': ['tire', 'إطار', 'كفر', 'اطار'],
-      'wiper': ['wiper', 'مساحة'],
-      'headlight': ['light', 'لمبة', 'إضاءة', 'headlight'],
-      'mirror': ['mirror', 'مرآة', 'مراية']
+      'fast charger': ['fast charger', 'شاحن سريع', 'dc charger', 'شحن سريع'],
+      'charger': ['charger', 'شاحن', 'charging'],
+      'wallbox': ['wallbox', 'wall box', 'شحن منزلي'],
+      'charging cable': ['cable', 'كابل', 'ccs', 'type2', 'nacs'],
+      'inverter': ['inverter', 'عاكس'],
+      'bms': ['bms', 'battery management'],
+      'cabin filter': ['cabin filter', 'فلتر مقصورة', 'cabin'],
+      'brake pad': ['brake', 'فرامل', 'فرملة', 'pad', 'فحمات'],
+      'coolant pump': ['coolant', 'مضخة تبريد', 'thermal']
     };
     
     // Extract brand
@@ -349,16 +271,7 @@ class NLPProcessorService {
    * Get Arabic brand name for indexing
    */
   getArabicBrandName(brand) {
-    const arabicNames = {
-      'Chery': 'شيري',
-      'Geely': 'جيلي',
-      'MG': 'ام جي',
-      'Haval': 'هافال',
-      'Great Wall': 'جريت وول',
-      'Changan': 'شانجان',
-      'BYD': 'بي واي دي'
-    };
-    return arabicNames[brand];
+    return ARABIC_BRAND_NAMES[brand];
   }
   
   /**

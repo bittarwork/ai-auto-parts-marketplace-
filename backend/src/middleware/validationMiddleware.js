@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator');
+const { EV_BRANDS } = require('../config/evCatalog');
 
 /**
  * Middleware to handle validation errors from express-validator
@@ -69,7 +70,7 @@ exports.registerRules = [
     .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
   body('phone')
     .notEmpty().withMessage('Phone number is required')
-    .matches(/^(05|5)\d{8}$/).withMessage('Please provide a valid Saudi phone number')
+    .matches(/^\+?[\d\s-]{8,20}$/).withMessage('Please provide a valid phone number')
 ];
 
 exports.productRules = [
@@ -99,7 +100,7 @@ exports.updateStockRules = [
 exports.vehicleRules = [
   body('brand')
     .notEmpty().withMessage('Brand is required')
-    .isIn(['Chery', 'Geely', 'MG', 'Haval', 'Great Wall', 'Changan', 'BYD'])
+    .isIn(EV_BRANDS)
     .withMessage('Invalid brand'),
   body('model')
     .notEmpty().withMessage('Model is required'),

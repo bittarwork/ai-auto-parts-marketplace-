@@ -15,8 +15,8 @@ export default function FAQPage() {
 
   const faqs = [
     {
-      q: 'How do I search for auto parts?',
-      a: 'Use our intelligent search bar on the homepage. You can search by part name, part number, or describe what you need. Our AI will find compatible parts for your vehicle.',
+      q: 'How do I search for EV parts?',
+      a: 'Use the intelligent search bar and type naturally, for example: "I want a battery for a Tesla 2022" or "Find a fast charger for an electric car". The AI extracts the part, brand, model, and year.',
     },
     {
       q: 'How can I check if a part fits my vehicle?',
@@ -24,11 +24,11 @@ export default function FAQPage() {
     },
     {
       q: 'What payment methods do you accept?',
-      a: 'We accept VISA, Mada, and STCPay. Payment is processed securely at checkout.',
+      a: 'We accept card, bank transfer, and cash on delivery. Prices are shown in Euro.',
     },
     {
       q: 'How long does shipping take?',
-      a: 'Standard shipping takes 3–7 business days. Orders over €500 qualify for free shipping. Express options are available at checkout.',
+      a: 'Standard shipping takes 3–7 business days. Orders over €150 qualify for free shipping.',
     },
     {
       q: 'Can I return a product?',
@@ -44,7 +44,7 @@ export default function FAQPage() {
     },
     {
       q: 'Is there a minimum order amount?',
-      a: 'There is no minimum order. Free shipping applies to orders over €500.',
+      a: 'There is no minimum order. Free shipping applies to orders over €150.',
     },
   ];
 

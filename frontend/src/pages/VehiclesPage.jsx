@@ -5,6 +5,7 @@ import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/common/ConfirmModal';
+import { EV_BRANDS, EV_MODELS, TRANSMISSIONS } from '../constants/evCatalog';
 import vehicleService from '../services/vehicleService';
 import ProductGrid from '../components/products/ProductGrid';
 import { InlineLoader } from '../components/common/Spinner';
@@ -26,9 +27,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 
-// Supported vehicle brands
-const BRANDS = ['Chery', 'Geely', 'MG', 'Haval', 'Great Wall', 'Changan', 'BYD'];
-const TRANSMISSIONS = ['Automatic', 'Manual', 'CVT'];
+const BRANDS = EV_BRANDS;
 
 const EMPTY_FORM = {
   brand: '',
@@ -107,7 +106,11 @@ export default function VehiclesPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'brand' ? { model: '' } : {})
+    }));
     if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: '' }));
   };
 
@@ -320,7 +323,7 @@ export default function VehiclesPage() {
                 Add your vehicle to enable AI-powered parts compatibility search and get personalized recommendations.
               </p>
               <p className="text-sm text-gray-400 dark:text-gray-500 mb-8">
-                Compatible with Chery, Geely, MG, Haval, Great Wall, Changan & BYD
+                Compatible with Tesla, BYD, Hyundai, Kia, Nissan, Volkswagen, MG and BMW
               </p>
               <Button variant="primary" size="lg" leftIcon={<PlusIcon className="w-5 h-5" />} onClick={openAdd}>
                 Add Your First Vehicle
@@ -508,14 +511,25 @@ export default function VehiclesPage() {
                   {formErrors.brand && <p className="mt-1 text-xs text-error-500">{formErrors.brand}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    label="Model *"
-                    name="model"
-                    value={formData.model}
-                    onChange={handleChange}
-                    error={formErrors.model}
-                    placeholder="e.g. Tiggo 7"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                      Model <span className="text-error-500">*</span>
+                    </label>
+                    <select
+                      name="model"
+                      value={formData.model}
+                      onChange={handleChange}
+                      className={`w-full border rounded-xl px-4 py-3 bg-white dark:bg-dark-bg text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
+                        formErrors.model ? 'border-error-500' : 'border-gray-300 dark:border-dark-border'
+                      }`}
+                    >
+                      <option value="">Select model...</option>
+                      {(EV_MODELS[formData.brand] || []).map((model) => (
+                        <option key={model} value={model}>{model}</option>
+                      ))}
+                    </select>
+                    {formErrors.model && <p className="mt-1 text-xs text-error-500">{formErrors.model}</p>}
+                  </div>
                   <Input
                     label="Year *"
                     name="year"

@@ -25,15 +25,15 @@ export default function SupportPage() {
     {
       title: 'Email Support',
       description: 'Send us an email and we will respond within 24 hours.',
-      action: 'info@chineseautoparts.sa',
-      href: 'mailto:info@chineseautoparts.sa',
+      action: 'info@evautoparts.com',
+      href: 'mailto:info@evautoparts.com',
       icon: EnvelopeIcon,
     },
     {
       title: 'Phone Support',
       description: 'Speak with our support team during business hours.',
-      action: '+966 50 123 4567',
-      href: 'tel:+966501234567',
+      action: '+49 30 1234 5678',
+      href: 'tel:+493012345678',
       icon: PhoneIcon,
     },
   ];

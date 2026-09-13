@@ -1,11 +1,11 @@
 {
-  "intelligentPlaceholder": "Search smartly... Example: oil filter for Chery Tiggo 2020",
+  "intelligentPlaceholder": "Search naturally... Example: battery for Tesla Model 3 2022",
   "voiceSearch": "Voice Search",
   "voiceSearchNotSupported": "Voice search is not supported in this browser",
   "searching": "Searching...",
   "noResults": "No results found",
   "resultsFor": "Search results for: {{query}}",
-  "aiHint": "Try searching naturally, like: 'I need brake pads for Haval Jolion'",
+  "aiHint": "Try searching naturally, like: 'Find a fast charger for an electric car'",
   "nlpAnalysis": {
     "title": "We understood your search as:",
     "partType": "Part Type",

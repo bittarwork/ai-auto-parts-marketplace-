@@ -1,0 +1,592 @@
+================================================================================
+PLAN: Adapt Current Project To The Graduation Study
+Project: E-Commerce Store For Electric Vehicle Parts
+With Intelligent Natural Language Search
+================================================================================
+
+Date: 2026-09-13
+Source project: ai-auto-parts-marketplace (Chinese Auto Parts / RedParts)
+Target project: EV Parts Store + NLP Smart Search
+Students: Omar Alsaqer, Mohannad Alsaqer
+Supervisor: Dr. Mohamed Shaiteh
+University: Syrian Virtual University (SVU)
+
+Currency used in the system: EUR
+Interface language of the application: English
+This plan document language: Arabic
+
+
+================================================================================
+1) GOAL OF THIS PLAN
+================================================================================
+
+Convert the existing MERN marketplace from "Chinese combustion-car parts"
+into an "Electric Vehicle (EV) spare parts store" without rebuilding the
+project from scratch.
+
+The existing architecture already matches the study:
+- MongoDB + Express + React + Node.js
+- JWT authentication
+- OpenAI natural language search
+- Vehicle-to-part compatibility
+- Cart, checkout, orders
+- Admin dashboard
+
+What must change is the DOMAIN, CONTENT, BRANDING, and a few data fields.
+What should NOT be done first: rewrite the stack, add Stripe, Cloudinary,
+Atlas Search, Gemini, or Redux just because they appear in the proposal table.
+
+
+================================================================================
+2) WHAT ALREADY MATCHES THE STUDY
+================================================================================
+
+Study requirement                              Current status
+---------------------------------------------  --------------------------------
+Web e-commerce store                           Done
+NLP smart search                               Done (OpenAI + MongoDB query)
+Compatibility between part and vehicle         Done
+Admin panel for products and orders            Done
+User pages: home, products, search, cart,      Done
+profile, orders
+MERN stack                                     Done
+JWT                                            Done
+Tailwind CSS                                   Done
+AI chatbot                                     Extra, useful for the study
+Guest cart + merge after login                 Extra, keep it
+Wishlist / vehicles / recommendations          Extra, keep them
+
+Conclusion:
+Do not start a new repository. Adapt this one.
+
+
+================================================================================
+3) WHAT MUST CHANGE (MANDATORY)
+================================================================================
+
+3.1 Identity and copy
+---------------------
+Replace every mention of:
+- Chinese Auto Parts
+- RedParts
+- Saudi Arabia market
+- Chery / Geely / Haval / Great Wall / Changan / Tiggo / Coolray / Jolion
+- oil filter, spark plug, timing belt, combustion engine parts
+
+With:
+- EV Parts Store (or a short English store name)
+- Electric vehicles
+- Tesla, BYD, Hyundai, Kia, Nissan, Volkswagen, MG, BMW
+- battery, charger, inverter, motor, BMS, charging cable, wallbox
+
+Files to update:
+- frontend/src/pages/HomePage.jsx
+- frontend/src/components/layout/Header.jsx
+- frontend/src/components/layout/Footer.jsx
+- frontend/src/i18n/locales/en/*.json
+- frontend/src/pages/AboutUsPage.jsx
+- frontend/src/pages/*Policy*.jsx and FAQ/Support pages
+- frontend/index.html (title)
+- backend/src/server.js
+- backend/package.json (description)
+- backend/src/config/openai.js
+- backend/src/services/nlpProcessorService.js
+- backend/src/services/chatbotService.js
+
+
+3.2 Brands and models
+---------------------
+Current locked brand list (must be replaced everywhere):
+Chery, Geely, MG, Haval, Great Wall, Changan, BYD
+
+Suggested EV brand list:
+- Tesla
+- BYD
+- Hyundai
+- Kia
+- Nissan
+- Volkswagen
+- MG
+- BMW
+
+Suggested models:
+- Tesla: Model 3, Model Y, Model S, Model X
+- BYD: Atto 3, Seal, Dolphin, Han
+- Hyundai: Ioniq 5, Ioniq 6, Kona Electric
+- Kia: EV6, Niro EV, EV9
+- Nissan: Leaf, Ariya
+- Volkswagen: ID.3, ID.4, ID.Buzz
+- MG: MG4, MG ZS EV
+- BMW: iX3, i4, iX
+
+Files that contain the old enum / hard-coded list:
+- backend/src/models/Product.js
+- backend/src/models/Vehicle.js
+- backend/src/middleware/validationMiddleware.js
+- backend/src/services/nlpProcessorService.js
+- backend/src/config/openai.js
+- frontend/src/components/search/SearchFilters.jsx
+- frontend/src/pages/HomePage.jsx
+- frontend/src/pages/VehiclesPage.jsx
+- frontend/src/pages/admin/ProductFormPage.jsx
+- backend/scripts/seed.js
+
+
+3.3 Categories and products
+---------------------------
+The current seed is WRONG for this study because it contains combustion
+maintenance parts (oil filter, timing belt, spark plugs, etc.).
+
+Replace category tree with EV categories, for example:
+
+Main categories:
+1. Battery & Energy Storage
+2. Charging Equipment
+3. Electric Drive (Motor / Inverter)
+4. Thermal Management
+5. Brakes & Regenerative Support
+6. Suspension & Tires
+7. Sensors, Cameras & ADAS
+8. Interior & Cabin Electronics
+9. Body & Exterior
+10. Maintenance Consumables (EV-safe only)
+
+Example subcategories:
+- High-voltage battery modules
+- BMS (Battery Management System)
+- Home wallbox chargers
+- Fast DC chargers / cables
+- CCS / Type2 / NACS connectors
+- Drive inverter
+- Electric motor parts
+- Battery coolant / heat pump parts
+- 12V auxiliary battery
+- Charging port / charge door
+- On-board charger (OBC)
+
+Product examples that must work with the study sentences:
+- Tesla Model 3 2022 12V auxiliary battery
+- Tesla Model Y HV battery coolant pump
+- CCS2 fast-charging cable
+- Type 2 home charging cable 7.4 kW
+- Wallbox 11 kW
+- BYD Atto 3 cabin filter
+- Ioniq 5 charging port assembly
+- Nissan Leaf brake pads
+- VW ID.4 12V battery
+- MG4 onboard charger related parts
+
+The seed script backend/scripts/seed.js must be rewritten for:
+- users (keep admin / supplier / customer structure)
+- EV categories
+- EV products with real compatibility rows
+- EV vehicles for demo users
+- orders / carts / wishlists / chat sessions using the new products
+
+
+3.4 Compatibility fields
+------------------------
+Current fields are combustion-oriented:
+- engineType: "1.5L Turbo"
+- transmission: Manual / Automatic / CVT
+
+Keep:
+- brand
+- model
+- yearFrom / yearTo
+- notes (en / ar)
+
+Add EV-oriented optional fields:
+- drivetrain: RWD / FWD / AWD / Dual-Motor
+- batteryCapacityKwh: Number
+- connectorType: CCS2 / Type2 / NACS / CHAdeMO
+- voltageClass: 12V / 400V / 800V
+
+Update:
+- Product compatibility sub-schema
+- Vehicle model
+- admin product form
+- vehicles page
+- compatibilityService if it only compares brand/model/year
+  (brand/model/year can stay as the main match rule)
+
+
+3.5 Currency and checkout consistency
+-------------------------------------
+Study / user rule: EUR or SYP only. Default = EUR.
+
+Current inconsistencies to fix:
+- Product.currency enum includes SAR and defaults to SAR
+- Order totals may assume SAR or hardcoded tax/shipping
+- Settings already uses EUR / SYP
+- Checkout currently hardcodes tax 15% and shipping 50 / free over 500
+- Settings seed uses tax 19% and shipping 12 EUR / free over 150 EUR
+
+Required:
+- Product.currency and Order.currency = EUR (or SYP if later requested)
+- Checkout and cart must read Settings (tax, shipping, free threshold)
+- All UI price labels show Euro
+- Remove leftover SAR text
+
+
+3.6 NLP prompts and examples
+----------------------------
+The AI layer must understand the exact study examples:
+
+Arabic examples from the study:
+1) اريد بطارية لسيارة تسلا موديل 2022
+2) ابحث عن شاحن سريع لسيارة كهربائية
+3) ما القطع المناسبة لسيارتي؟
+
+English equivalents the system should also understand:
+1) I want a battery for a Tesla 2022
+2) Find a fast charger for an electric car
+3) What parts fit my car?
+
+Update prompts in backend/src/config/openai.js:
+- Change platform description to EV parts store
+- Change supported brands
+- Change part-type examples to battery, charger, inverter, wallbox, cable
+- Change few-shot examples to Tesla / BYD / Ioniq / Leaf
+
+Update fallback dictionaries in nlpProcessorService.js:
+- brand aliases: tesla, تسلا, byd, بي واي دي, ioniq, leaf, id.4, ...
+- model aliases: model 3, model y, atto 3, ioniq 5, ev6, ...
+- part-type aliases: battery, charger, wallbox, inverter, bms, cable
+
+
+================================================================================
+4) WHAT IS OPTIONAL (DO NOT BLOCK THE CORE ADAPTATION)
+================================================================================
+
+Item in the study table          Current code                 Decision
+-------------------------------  ---------------------------  -----------------
+Redux Toolkit                    Installed, unused            Later or change
+                                                                  the written study
+Gemini API                       OpenAI only                  Keep OpenAI
+MongoDB Atlas Search             Text index + NLP             Keep current search
+Cloudinary                       Local /uploads               Later
+Stripe                           Dummy payment methods        Later
+Vercel + Render                  Not configured               Later for demo deploy
+Product reviews model            averageRating exists only    Later
+Mobile app                       Not required now             Future work only
+
+Academic honesty rule:
+If a technology is not implemented, do not write that it is used.
+Either implement it, or edit the study text to match the real stack.
+
+
+================================================================================
+5) IMPLEMENTATION PHASES
+================================================================================
+
+PHASE 1 — Domain conversion (must do first)
+-------------------------------------------
+Goal: the running app looks and searches like an EV store.
+
+Tasks:
+1. Create a shared brands/models constant for backend (and mirror in frontend).
+2. Update Product.js, Vehicle.js, validationMiddleware.js enums.
+3. Update openai.js prompts and chatbot wording.
+4. Update nlpProcessorService brand/model/part dictionaries.
+5. Update SearchFilters, HomePage brands, VehiclesPage, ProductFormPage.
+6. Rewrite seed categories and products.
+7. Fix currency to EUR everywhere in models + seed + checkout/cart.
+8. Update store name, hero text, about, FAQ, footer.
+9. Run: backend npm run seed
+10. Test the 3 study search sentences.
+
+Acceptance for Phase 1:
+- Home page shows EV brands
+- Search "battery for Tesla 2022" returns Tesla-compatible batteries
+- Search "fast charger" returns charging products
+- Logged-in user with a Tesla can see compatible parts
+- No Chery / oil filter / spark plug leftovers in UI or seed
+
+
+PHASE 2 — Academic feature alignment
+------------------------------------
+Goal: every written objective has a visible screen.
+
+Tasks:
+1. Confirm smart search page shows AI Understanding badges.
+2. Confirm chatbot answers EV questions and suggests products.
+3. Confirm compatibility badge on product cards / details.
+4. Confirm admin can add an EV product with compatibility matrix.
+5. Confirm order flow still works after seed rewrite.
+6. Make checkout use Settings for tax/shipping instead of hardcoded values.
+7. Fix product.discount usage if the field does not exist in Product schema.
+8. Prevent register() from accepting role=administrator from the request body.
+
+
+PHASE 3 — Report vs code cleanup
+--------------------------------
+Goal: the written study matches the real software.
+
+Update the study text:
+- AI Processing: OpenAI API (Gemini = future option)
+- State Management: React Context
+  (or implement Redux for cart/auth if the supervisor requires the table)
+- Search Engine: OpenAI NLP + MongoDB text index
+  (Atlas Search = future option)
+- File Upload: local uploads now, Cloudinary later
+- Payments: Cash on delivery + bank transfer + card placeholder
+  (Stripe later)
+- Deployment: local demo now, Vercel + Render later
+
+Also fix leftover comments/docs that still say Chinese cars / Saudi market.
+Do not create extra markdown files unless asked.
+
+
+PHASE 4 — Optional extras if time remains
+-----------------------------------------
+1. Real Review model + product reviews UI
+2. Cloudinary image upload
+3. Stripe test-mode checkout
+4. Wire Redux Toolkit for auth/cart if the supervisor insists
+5. Arabic UI / RTL (only if requested)
+6. Deploy frontend to Vercel and backend to Render
+7. Add a few more EV products and demo orders
+
+
+================================================================================
+6) FILE-BY-FILE WORK LIST
+================================================================================
+
+BACKEND MODELS
+- backend/src/models/Product.js
+  Change brand enum, add EV compatibility fields, currency EUR
+- backend/src/models/Vehicle.js
+  Change brand enum, add EV vehicle fields
+- backend/src/models/Order.js
+  Align currency/tax/shipping with Settings
+- backend/src/models/Settings.js
+  Keep EUR/SYP, set store name to EV store
+- backend/src/models/User.js
+  No domain change required except seed data
+
+BACKEND AI / SERVICES
+- backend/src/config/openai.js
+  Rewrite searchNLP, chatbot, recommendation prompts
+- backend/src/services/nlpProcessorService.js
+  New brand/model/part maps and fallbacks
+- backend/src/services/chatbotService.js
+  EV wording and product mention examples
+- backend/src/services/compatibilityService.js
+  Keep brand/model/year match; support new optional fields if useful
+- backend/src/services/aiSearchService.js
+  Review partType mapping against new categories
+- backend/src/services/searchRankingService.js
+  Keep; verify EV keywords still rank well
+- backend/src/services/recommendationService.js
+  Keep; seed must provide enough order history
+
+BACKEND API / BUSINESS
+- backend/src/middleware/validationMiddleware.js
+  New brand lists and EV field validation
+- backend/src/controllers/authController.js
+  Do not accept arbitrary role from register body
+- backend/src/controllers/cartController.js
+  Remove product.discount if field does not exist; use Settings
+- backend/src/controllers/orderController.js
+  Use Settings tax/shipping; EUR
+- backend/src/server.js
+  Welcome text = EV parts API
+- backend/scripts/seed.js
+  Full rewrite of categories, products, vehicles, sample orders
+
+FRONTEND STOREFRONT
+- frontend/src/pages/HomePage.jsx
+  EV hero, EV brands, EV example queries
+- frontend/src/components/search/IntelligentSearchBar.jsx
+  Placeholder examples from the study
+- frontend/src/components/search/SearchFilters.jsx
+  New brands and EV category filters
+- frontend/src/pages/SearchResultsPage.jsx
+  Copy only if it mentions Chinese cars
+- frontend/src/pages/VehiclesPage.jsx
+  New brands/models dropdowns
+- frontend/src/pages/ProductDetailsPage.jsx
+  Show connector / voltage if present
+- frontend/src/pages/admin/ProductFormPage.jsx
+  Compatibility form for EV brands and new fields
+- frontend/src/components/layout/Header.jsx
+- frontend/src/components/layout/Footer.jsx
+- frontend/src/i18n/locales/en/common.json
+- frontend/src/i18n/locales/en/products.json
+- frontend/src/i18n/locales/en/search.json
+- frontend/index.html
+
+FRONTEND OPTIONAL LATER
+- Redux store (only if supervisor requires it)
+- Reviews UI
+- Stripe checkout page
+
+
+================================================================================
+7) SUGGESTED NEW SEED CONTENT
+================================================================================
+
+Users (keep the same login idea):
+- Admin:     admin@evparts.com        / Admin@2024!
+- Supplier:  supplier1@evparts.com    / Supplier@2024!
+- Customer:  ahmed@example.com        / Customer@2024!
+
+Or keep old emails if you want less login-page churn.
+Old emails are acceptable if passwords stay the same.
+
+Settings:
+- siteName: EV Auto Parts
+- currency: EUR
+- shippingFlatRate: 12
+- freeShippingThreshold: 150
+- taxRate: 19
+- defaultLanguage: en
+
+Demo vehicles for the main customer:
+- Tesla Model 3, 2022, RWD, connector NACS/CCS2
+- BYD Atto 3, 2023
+- Hyundai Ioniq 5, 2023
+
+Minimum product count after rewrite: 35 to 45 EV parts
+Minimum categories: 8 main + about 15 subcategories
+Orders: keep 8 to 12 orders across all statuses so admin analytics still work
+
+
+================================================================================
+8) TEST PLAN AFTER ADAPTATION
+================================================================================
+
+Smart search
+- Type: I want a battery for a Tesla 2022
+  Expect: Tesla-compatible battery products, AI badges show brand=Tesla, year=2022
+- Type: Find a fast charger for an electric car
+  Expect: DC/fast charger or CCS cable products
+- Type: What parts fit my car?
+  While logged in with Tesla Model 3 2022
+  Expect: chatbot or search uses the saved vehicle and returns compatible parts
+
+Compatibility
+- Open a Tesla battery product while the user has Tesla Model 3 2022
+  Expect: compatible badge
+- Open a Nissan Leaf-only part with a Tesla vehicle
+  Expect: not compatible
+
+Store flow
+- Guest adds charger to cart
+- Register/login merges guest cart
+- Checkout uses EUR, Settings tax/shipping
+- Order appears in /orders and /admin/orders
+
+Admin
+- Create product "CCS2 Fast Charging Cable"
+- Set compatibility Tesla Model 3 2019-2025
+- Product appears in store and in NLP search
+
+Regression
+- Login/register/forgot password still work
+- Wishlist, vehicles CRUD, chatbot widget still work
+- Dark/light theme still work
+- No old Chinese brand names visible in UI
+
+
+================================================================================
+9) RISKS AND HOW TO AVOID THEM
+================================================================================
+
+Risk 1: Seed still contains combustion parts
+Fix: rewrite seed.js completely, then search the repo for Chery, Tiggo,
+oil filter, spark plug, timing belt.
+
+Risk 2: Enums updated in one file but not others
+Fix: one shared brand list in backend, then update frontend lists to match.
+
+Risk 3: NLP works but returns zero products
+Fix: seed products must use the same brand/model strings as the NLP output
+(Tesla / Model 3, not "tesla model-3").
+
+Risk 4: Study text claims Stripe / Atlas / Cloudinary / Redux
+Fix: either implement or edit the study. Do not claim unused tools.
+
+Risk 5: Checkout totals ignore Settings
+Fix: Phase 2 must read Settings in cart and order creation.
+
+Risk 6: Register allows administrator role
+Fix: force role=customer on public register.
+
+Risk 7: Spending weeks on deployment/payments before the catalog is EV
+Fix: finish Phase 1 first. The committee will judge the idea by search + data.
+
+
+================================================================================
+10) RECOMMENDED ORDER OF WORK (PRACTICAL)
+================================================================================
+
+Day/block 1
+- Shared EV brands/models
+- Update models + validation
+- Update AI prompts + NLP dictionaries
+
+Day/block 2
+- Rewrite seed categories and products
+- Rewrite demo vehicles and orders
+- Run seed and verify MongoDB data
+
+Day/block 3
+- Update frontend home, filters, vehicle form, admin product form
+- Update header/footer/about/FAQ wording
+- Fix EUR currency display
+
+Day/block 4
+- Test the 3 study queries
+- Fix compatibility and empty-result cases
+- Align checkout with Settings
+- Close leftover Chinese-car strings
+
+Day/block 5 (if needed)
+- Security/register role fix
+- Small UI polish
+- Prepare demo accounts and demo script for the supervisor
+
+
+================================================================================
+11) DEMO SCRIPT FOR THE SUPERVISOR
+================================================================================
+
+1. Open the homepage. Show EV brands and the smart search bar.
+2. Search: I want a battery for a Tesla 2022
+   Show the AI Understanding card and results.
+3. Search: Find a fast charger for an electric car
+4. Login as ahmed@example.com
+5. Open Vehicles. Show Tesla Model 3 2022 as primary vehicle.
+6. Ask chatbot: What parts fit my car?
+7. Open a product page. Show compatibility badge.
+8. Add to cart and checkout (EUR, dummy payment).
+9. Open /admin as admin@autoparts.com or the new admin email.
+10. Show products, orders, and settings.
+
+This 10-step path covers the written objectives of the study.
+
+
+================================================================================
+12) FINAL DECISION
+================================================================================
+
+Do this:
+1. Keep the current codebase.
+2. Change domain from Chinese ICE cars to electric vehicles.
+3. Rewrite seed + NLP + branding.
+4. Make currency EUR consistent.
+5. Make the written study match the real stack.
+
+Do not do this first:
+1. Rebuild in a new repo.
+2. Add Stripe / Cloudinary / Atlas Search / Gemini / Redux
+   before the EV catalog and NLP examples work.
+
+After Phase 1 the project name and the running software will match
+the graduation study title.
+
+================================================================================
+END OF PLAN
+================================================================================

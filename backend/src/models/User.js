@@ -58,7 +58,7 @@ const userSchema = new mongoose.Schema({
     city: String,
     district: String,
     postalCode: String,
-    country: { type: String, default: 'Saudi Arabia' },
+    country: { type: String, default: 'Germany' },
     isDefault: { type: Boolean, default: false },
     phone: String,
     latitude: Number,

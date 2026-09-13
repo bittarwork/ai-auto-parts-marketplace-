@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const { getPricingSettings, calculateTotals } = require('../utils/pricing');
 
 /**
  * ★★★ ORDER CONTROLLER ★★★
@@ -143,9 +144,7 @@ exports.createOrder = async (req, res) => {
         });
       }
       
-      const unitPrice = product.discount
-        ? product.price * (1 - product.discount / 100)
-        : product.price;
+      const unitPrice = product.price;
       
       subtotal += unitPrice * item.quantity;
       
@@ -161,9 +160,8 @@ exports.createOrder = async (req, res) => {
       });
     }
     
-    const tax = subtotal * 0.15; // 15% VAT
-    const shippingCost = subtotal >= 500 ? 0 : 50; // Free shipping over 500 SAR
-    const total = subtotal + tax + shippingCost;
+    const pricing = await getPricingSettings();
+    const { tax, shipping: shippingCost, total, currency } = calculateTotals(subtotal, pricing);
     
     // Map payment method to Order schema enum (card, cash_on_delivery, bank_transfer)
     const paymentMethodMap = {
@@ -183,7 +181,7 @@ exports.createOrder = async (req, res) => {
       city: addr.city || '',
       district: addr.state || addr.district || '',
       postalCode: addr.postalCode || '',
-      country: addr.country || 'Saudi Arabia'
+      country: addr.country || ''
     };
     
     const order = await Order.create({
@@ -194,6 +192,7 @@ exports.createOrder = async (req, res) => {
       shipping: shippingCost,
       discount: 0,
       total,
+      currency,
       shippingAddress: mappedAddress,
       paymentMethod: orderPaymentMethod,
       paymentStatus: 'pending',

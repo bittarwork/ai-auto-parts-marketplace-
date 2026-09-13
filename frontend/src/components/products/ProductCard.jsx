@@ -38,7 +38,7 @@ export default function ProductCard({
     name,
     partNumber,
     price,
-    currency = 'SAR',
+    currency = 'EUR',
     images,
     averageRating,
     totalReviews,
@@ -164,8 +164,8 @@ export default function ProductCard({
           <span className="text-2xl font-bold text-gray-900 dark:text-white">
             {formatPrice(price)}
           </span>
-          {currency === 'SAR' && (
-            <span className="text-sm text-gray-500">+ VAT</span>
+          {currency === 'EUR' && (
+            <span className="text-sm text-gray-500">incl. tax</span>
           )}
         </div>
         

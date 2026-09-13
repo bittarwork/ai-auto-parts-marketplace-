@@ -103,7 +103,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'Welcome to Chinese Auto Parts API',
+    message: 'Welcome to EV Auto Parts API',
     version: '1.0.0',
     documentation: '/api/docs',
     endpoints: {

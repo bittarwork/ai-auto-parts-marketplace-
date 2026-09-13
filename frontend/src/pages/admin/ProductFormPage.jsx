@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { EV_BRANDS, EV_MODELS } from '../../constants/evCatalog';
 import { createProduct, updateProduct, getAdminCategories } from '../../services/adminService';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -461,20 +462,26 @@ const ProductFormPage = () => {
         ))}
 
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
-          <input
-            type="text"
+          <select
             value={newCompat.brand}
-            onChange={(e) => setNewCompat(prev => ({ ...prev, brand: e.target.value }))}
+            onChange={(e) => setNewCompat(prev => ({ ...prev, brand: e.target.value, model: '' }))}
             className={inputClass}
-            placeholder="Brand *"
-          />
-          <input
-            type="text"
+          >
+            <option value="">Brand *</option>
+            {EV_BRANDS.map((brand) => (
+              <option key={brand} value={brand}>{brand}</option>
+            ))}
+          </select>
+          <select
             value={newCompat.model}
             onChange={(e) => setNewCompat(prev => ({ ...prev, model: e.target.value }))}
             className={inputClass}
-            placeholder="Model *"
-          />
+          >
+            <option value="">Model *</option>
+            {(EV_MODELS[newCompat.brand] || []).map((model) => (
+              <option key={model} value={model}>{model}</option>
+            ))}
+          </select>
           <input
             type="number"
             value={newCompat.yearFrom}

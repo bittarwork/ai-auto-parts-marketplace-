@@ -9,19 +9,10 @@ import {
 import Button from '../common/Button';
 import clsx from 'clsx';
 
-const BRANDS = ['Chery', 'Geely', 'MG', 'Haval', 'Great Wall', 'Changan', 'BYD'];
+import { EV_BRANDS, EV_FILTER_CATEGORIES } from '../../constants/evCatalog';
 
-const CATEGORIES = [
-  { value: '', label: 'All Categories' },
-  { value: 'engine', label: 'Engine' },
-  { value: 'brakes', label: 'Brakes' },
-  { value: 'suspension', label: 'Suspension' },
-  { value: 'electrical', label: 'Electrical' },
-  { value: 'body', label: 'Body Parts' },
-  { value: 'filters', label: 'Filters' },
-  { value: 'cooling', label: 'Cooling' },
-  { value: 'transmission', label: 'Transmission' }
-];
+const BRANDS = EV_BRANDS;
+const CATEGORIES = EV_FILTER_CATEGORIES;
 
 /**
  * SearchFilters Panel

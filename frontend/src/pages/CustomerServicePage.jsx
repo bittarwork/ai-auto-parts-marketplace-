@@ -79,23 +79,23 @@ export default function CustomerServicePage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <a
-              href="tel:+966501234567"
+              href="tel:+493012345678"
               className="flex items-center gap-3 p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-secondary transition-colors"
             >
               <PhoneIcon className="w-6 h-6 text-primary-500" />
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Phone</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">+966 50 123 4567</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">+49 30 1234 5678</p>
               </div>
             </a>
             <a
-              href="mailto:info@chineseautoparts.sa"
+              href="mailto:info@evautoparts.com"
               className="flex items-center gap-3 p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-secondary transition-colors"
             >
               <EnvelopeIcon className="w-6 h-6 text-primary-500" />
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Email</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">info@chineseautoparts.sa</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">info@evautoparts.com</p>
               </div>
             </a>
           </div>

@@ -62,8 +62,8 @@ export default function RegisterPage() {
     
     if (!formData.phone) {
       newErrors.phone = 'Phone number is required';
-    } else if (!/^(05|5)\d{8}$/.test(formData.phone.replace(/[\s-]/g, ''))) {
-      newErrors.phone = 'Please enter a valid Saudi phone number';
+    } else if (!/^\+?[\d\s-]{8,20}$/.test(formData.phone)) {
+      newErrors.phone = 'Please enter a valid phone number';
     }
     
     if (!formData.password) {
@@ -169,8 +169,8 @@ export default function RegisterPage() {
               onChange={handleChange}
               error={errors.phone}
               leftIcon={<PhoneIcon className="w-5 h-5" />}
-              placeholder="05XXXXXXXX"
-              helperText="Saudi phone number"
+              placeholder="+49 176 12345678"
+              helperText="Include country code"
               required
             />
             

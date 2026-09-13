@@ -10,6 +10,7 @@ import ProductGrid from '../components/products/ProductGrid';
 import RecommendedProducts from '../components/products/RecommendedProducts';
 import { InlineLoader } from '../components/common/Spinner';
 import aiSearchService from '../services/aiSearchService';
+import { EV_BRANDS } from '../constants/evCatalog';
 import {
   SparklesIcon,
   BoltIcon,
@@ -75,9 +76,7 @@ export default function HomePage() {
     }
   ];
   
-  const brands = [
-    'Chery', 'Geely', 'MG', 'Haval', 'Great Wall', 'Changan', 'BYD'
-  ];
+  const brands = EV_BRANDS;
   
   return (
     <div className="min-h-screen">
@@ -92,12 +91,12 @@ export default function HomePage() {
             </Badge>
             
             <h1 className="text-4xl lg:text-6xl font-bold mb-6 leading-tight">
-              Find the Perfect Auto Parts
-              <span className="block text-primary-200">with AI Intelligence</span>
+              Find the Right EV Parts
+              <span className="block text-primary-200">with Natural Language Search</span>
             </h1>
             
             <p className="text-lg lg:text-xl text-primary-100 mb-10">
-              Search naturally for Chinese car parts. Our AI understands your needs and finds exactly what you're looking for.
+              Search as you speak for electric vehicle parts. Our AI understands your request and finds compatible products.
             </p>
             
             {/* Hero Search Bar */}
@@ -107,7 +106,7 @@ export default function HomePage() {
             <div className="mt-8">
               <p className="text-sm text-primary-200 mb-3">Popular searches:</p>
               <div className="flex flex-wrap justify-center gap-2">
-                {['brake pads', 'oil filter', 'headlight', 'spark plugs'].map((term) => (
+                {['battery for Tesla 2022', 'fast charger', 'CCS2 cable', 'wallbox 11kW'].map((term) => (
                   <Link
                     key={term}
                     to={`/search?q=${term}`}
@@ -130,7 +129,7 @@ export default function HomePage() {
               Why Choose Us?
             </h2>
             <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Advanced AI technology meets quality auto parts for Chinese vehicles
+              Natural language search for batteries, chargers, and EV-specific parts
             </p>
           </div>
           
@@ -163,7 +162,7 @@ export default function HomePage() {
               Supported Brands
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
-              We carry parts for all major Chinese automotive brands
+              We carry parts for major electric vehicle brands
             </p>
           </div>
           

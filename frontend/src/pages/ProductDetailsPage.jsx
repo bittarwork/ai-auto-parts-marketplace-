@@ -130,7 +130,7 @@ export default function ProductDetailsPage() {
   const formatPrice = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: displayProduct.currency || 'SAR',
+      currency: displayProduct.currency || 'EUR',
       minimumFractionDigits: 0,
     }).format(amount);
   };

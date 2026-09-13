@@ -1,20 +1,23 @@
 const Cart = require('../models/Cart');
 const GuestCart = require('../models/GuestCart');
 const Product = require('../models/Product');
+const { getPricingSettings, calculateTotals } = require('../utils/pricing');
 
-/** Helper: Calculate cart totals from items */
-function calculateCartTotals(items) {
+/** Helper: Calculate cart totals from items using store settings */
+async function calculateCartTotals(items) {
   let subtotal = 0, totalItems = 0;
   const validItems = items.filter(item => {
     if (!item.product || !item.product.isActive || item.product.stock === 0) return false;
-    const price = item.product.discount ? item.product.price * (1 - item.product.discount / 100) : item.product.price;
+    const price = item.product.price;
     subtotal += price * item.quantity;
     totalItems += item.quantity;
     item.itemTotal = price * item.quantity;
     item.unitPrice = price;
     return true;
   });
-  return { validItems, subtotal, totalItems };
+  const pricing = await getPricingSettings();
+  const totals = calculateTotals(subtotal, pricing);
+  return { validItems, totalItems, ...totals };
 }
 
 /**
@@ -28,7 +31,7 @@ exports.getCart = async (req, res) => {
     if (req.user) {
       // Logged-in user: use Cart model
       let cart = await Cart.findOne({ user: req.user._id })
-        .populate({ path: 'items.product', select: 'name partNumber price images stock isActive discount' })
+        .populate({ path: 'items.product', select: 'name partNumber price images stock isActive' })
         .lean();
       if (!cart) cart = { items: [] };
       cartData = cart;
@@ -38,17 +41,17 @@ exports.getCart = async (req, res) => {
       if (!sessionId) {
         return res.json({
           success: true,
-          data: { cart: { items: [] }, summary: { subtotal: 0, totalItems: 0, tax: 0, total: 0 } }
+          data: { cart: { items: [] }, summary: { subtotal: 0, totalItems: 0, tax: 0, shipping: 0, total: 0, currency: 'EUR' } }
         });
       }
       let guestCart = await GuestCart.findOne({ sessionId })
-        .populate({ path: 'items.product', select: 'name partNumber price images stock isActive discount' })
+        .populate({ path: 'items.product', select: 'name partNumber price images stock isActive' })
         .lean();
       if (!guestCart) guestCart = { items: [] };
       cartData = guestCart;
     }
 
-    const { validItems, subtotal, totalItems } = calculateCartTotals(cartData.items || []);
+    const { validItems, subtotal, totalItems, tax, shipping, total, currency } = await calculateCartTotals(cartData.items || []);
 
     res.json({
       success: true,
@@ -57,8 +60,10 @@ exports.getCart = async (req, res) => {
         summary: {
           subtotal,
           totalItems,
-          tax: subtotal * 0.15,
-          total: subtotal * 1.15
+          tax,
+          shipping,
+          total,
+          currency
         }
       }
     });

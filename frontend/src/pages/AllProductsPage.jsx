@@ -46,8 +46,7 @@ export default function AllProductsPage() {
     page: parseInt(searchParams.get('page')) || 1
   });
   
-  // Chinese car brands
-  const brands = ['Chery', 'Geely', 'MG', 'Haval', 'Great Wall', 'Changan', 'BYD'];
+  const brands = ['Tesla', 'BYD', 'Hyundai', 'Kia', 'Nissan', 'Volkswagen', 'MG', 'BMW'];
   
   // Sort options
   const sortOptions = [
@@ -163,7 +162,7 @@ export default function AllProductsPage() {
             All Products
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Browse our complete catalog of Chinese auto parts
+            Browse our complete catalog of electric vehicle parts
           </p>
         </div>
         
@@ -267,7 +266,7 @@ export default function AllProductsPage() {
               
               {/* Min Price */}
               <div>
-                <label className="label">Min Price (SAR)</label>
+                <label className="label">Min Price (EUR)</label>
                 <Input
                   type="number"
                   placeholder="0"
@@ -278,7 +277,7 @@ export default function AllProductsPage() {
               
               {/* Max Price */}
               <div>
-                <label className="label">Max Price (SAR)</label>
+                <label className="label">Max Price (EUR)</label>
                 <Input
                   type="number"
                   placeholder="1000"

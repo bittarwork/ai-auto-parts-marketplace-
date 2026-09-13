@@ -318,7 +318,7 @@ export default function SearchResultsPage() {
               Start Your Intelligent Search
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
-              Search naturally, like "oil filter for Chery Tiggo 2020"
+              Search naturally, like "battery for Tesla Model 3 2022"
             </p>
           </div>
         )}

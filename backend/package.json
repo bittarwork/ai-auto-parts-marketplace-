@@ -1,7 +1,7 @@
 {
   "name": "chinese-auto-parts-backend",
   "version": "1.0.0",
-  "description": "Backend API for Chinese Auto Parts E-Commerce Platform with AI Features",
+  "description": "Backend API for EV Auto Parts e-commerce with natural language search",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

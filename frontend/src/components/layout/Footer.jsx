@@ -48,17 +48,17 @@ export default function Footer() {
   const contactInfo = [
     {
       icon: PhoneIcon,
-      text: '+966 50 123 4567',
-      href: 'tel:+966501234567',
+      text: '+49 30 1234 5678',
+      href: 'tel:+493012345678',
     },
     {
       icon: EnvelopeIcon,
-      text: 'info@chineseautoparts.sa',
-      href: 'mailto:info@chineseautoparts.sa',
+      text: 'info@evautoparts.com',
+      href: 'mailto:info@evautoparts.com',
     },
     {
       icon: MapPinIcon,
-      text: 'Riyadh, Saudi Arabia',
+      text: 'Berlin, Germany',
       href: '#',
     },
   ];
@@ -72,14 +72,14 @@ export default function Footer() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">CA</span>
+                <span className="text-white font-bold text-xl">EV</span>
               </div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                 {t('common:appName')}
               </h2>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              AI-Powered platform for Chinese auto parts with intelligent search
+              Intelligent store for electric vehicle parts with natural language search
             </p>
             
             {/* Contact Info */}
@@ -136,13 +136,13 @@ export default function Footer() {
               </span>
               <div className="flex items-center space-x-2">
                 <div className="w-12 h-8 bg-gray-200 dark:bg-dark-bg rounded flex items-center justify-center text-xs">
-                  VISA
+                  Card
                 </div>
                 <div className="w-12 h-8 bg-gray-200 dark:bg-dark-bg rounded flex items-center justify-center text-xs">
-                  Mada
+                  Bank
                 </div>
                 <div className="w-12 h-8 bg-gray-200 dark:bg-dark-bg rounded flex items-center justify-center text-xs">
-                  STCPay
+                  COD
                 </div>
               </div>
             </div>

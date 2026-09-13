@@ -8,7 +8,7 @@ const settingsSchema = new mongoose.Schema({
   // General settings
   siteName: {
     type: String,
-    default: 'Auto Parts Marketplace'
+    default: 'EV Auto Parts'
   },
   contactEmail: {
     type: String,

@@ -38,7 +38,7 @@ export default function AboutUsPage() {
             About Us
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Chinese Auto Parts — An intelligent e-commerce platform for auto parts with AI-powered search and vehicle compatibility verification.
+            EV Auto Parts — An intelligent e-commerce platform for electric vehicle parts with natural language search and vehicle compatibility verification.
           </p>
         </div>
 

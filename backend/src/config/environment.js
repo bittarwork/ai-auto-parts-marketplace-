@@ -16,7 +16,7 @@ const config = {
   
   // Database
   mongodb: {
-    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/chinese-auto-parts',
+    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/ev-auto-parts',
   },
   
   // Redis

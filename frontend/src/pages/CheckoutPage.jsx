@@ -159,8 +159,8 @@ export default function CheckoutPage() {
     
     if (!shippingForm.fullName) newErrors.fullName = 'Full name is required';
     if (!shippingForm.phone) newErrors.phone = 'Phone number is required';
-    else if (!/^(05|5)\d{8}$/.test(shippingForm.phone.replace(/[\s-]/g, ''))) {
-      newErrors.phone = 'Invalid Saudi phone number';
+    else if (!/^\+?[\d\s-]{8,20}$/.test(shippingForm.phone)) {
+      newErrors.phone = 'Invalid phone number';
     }
     if (!shippingForm.email) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(shippingForm.email)) {
@@ -258,7 +258,7 @@ export default function CheckoutPage() {
   const formatPrice = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'SAR',
+      currency: 'EUR',
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -408,7 +408,7 @@ export default function CheckoutPage() {
                       value={shippingForm.phone}
                       onChange={handleShippingChange}
                       error={errors.phone}
-                      placeholder="05XXXXXXXX"
+                      placeholder="+49 176 12345678"
                     />
                   </div>
                   
@@ -446,7 +446,7 @@ export default function CheckoutPage() {
                       value={shippingForm.city}
                       onChange={handleShippingChange}
                       error={errors.city}
-                      placeholder="Riyadh"
+                      placeholder="Berlin"
                     />
                     
                     <Input
@@ -454,7 +454,7 @@ export default function CheckoutPage() {
                       name="state"
                       value={shippingForm.state}
                       onChange={handleShippingChange}
-                      placeholder="Riyadh Region"
+                      placeholder="Mitte"
                     />
                     
                     <Input

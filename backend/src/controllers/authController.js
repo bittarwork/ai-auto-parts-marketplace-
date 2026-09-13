@@ -9,7 +9,7 @@ const cartController = require('./cartController');
  */
 exports.register = async (req, res) => {
   try {
-    const { name, email, phone, password, role = 'customer' } = req.body;
+    const { name, email, phone, password } = req.body;
     
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -26,7 +26,7 @@ exports.register = async (req, res) => {
       email,
       phone,
       password,
-      role
+      role: 'customer'
     });
     
     // Merge guest cart if cartSessionId provided

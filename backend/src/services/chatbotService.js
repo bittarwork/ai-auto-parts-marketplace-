@@ -46,7 +46,7 @@ class ChatbotService {
       
       // Add product linking instructions to system prompt
       messages[0].content += `\n\nIMPORTANT: 
-- When you identify or recommend specific auto parts, mention them clearly by name and type so the system can link them. For example: "I recommend the Oil Filter for Chery Tiggo" or "You might need Brake Pads for your vehicle."
+- When you identify or recommend specific EV parts, mention them clearly by name and type so the system can link them. For example: "I recommend the 12V Battery for Tesla Model 3" or "You might need a CCS2 Fast Charging Cable."
 - You CAN provide direct product links. The system automatically attaches clickable product cards with links below your message whenever you mention a part. Always inform the user that direct product links will appear below your response so they can click and view the product immediately.
 - NEVER say you cannot provide links. Instead, say something like: "Here are the recommended parts — you will find direct links to the products below this message."
 - If the user asks for a link or a URL, confirm that product links are shown directly in the chat below your reply.`;
@@ -134,13 +134,11 @@ class ChatbotService {
       
       // Part type keywords to search for
       const partKeywords = [
-        'brake pad', 'brake disc', 'oil filter', 'air filter', 'spark plug',
-        'headlight', 'tail light', 'bumper', 'mirror', 'battery', 'alternator',
-        'starter', 'radiator', 'thermostat', 'water pump', 'fuel pump',
-        'timing belt', 'serpentine belt', 'shock absorber', 'strut',
-        'control arm', 'tie rod', 'ball joint', 'wheel bearing',
-        'clutch', 'transmission', 'engine mount', 'exhaust', 'muffler',
-        'wiper', 'cabin filter', 'fuel filter', 'sensor', 'coil'
+        'battery', '12v battery', 'charger', 'fast charger', 'wallbox',
+        'charging cable', 'ccs2', 'type 2', 'nacs', 'inverter', 'bms',
+        'coolant pump', 'heat pump', 'cabin filter', 'brake pad', 'brake disc',
+        'charge port', 'onboard charger', 'tire', 'sensor', 'camera',
+        'wiper', 'headlight', 'mirror', 'shock absorber'
       ];
       
       // Find which part types are mentioned
@@ -424,7 +422,7 @@ class ChatbotService {
     if (lowerMessage.includes('shipping') || lowerMessage.includes('توصيل') || lowerMessage.includes('شحن')) {
       return isArabic
         ? 'نقدم خدمة التوصيل لجميع مدن المملكة. عادة ما يستغرق التوصيل من 3-5 أيام عمل.'
-        : 'We offer delivery to all cities in Saudi Arabia. Delivery usually takes 3-5 business days.';
+        : 'We offer delivery across Europe. Delivery usually takes 3-5 business days.';
     }
     
     if (lowerMessage.includes('compatible') || lowerMessage.includes('fit') || lowerMessage.includes('متوافق') || lowerMessage.includes('يناسب')) {

@@ -1,4 +1,11 @@
 const mongoose = require('mongoose');
+const {
+  EV_BRANDS,
+  TRANSMISSIONS,
+  DRIVETRAINS,
+  CONNECTOR_TYPES,
+  VOLTAGE_CLASSES
+} = require('../config/evCatalog');
 
 const vehicleSchema = new mongoose.Schema({
   user: {
@@ -11,13 +18,12 @@ const vehicleSchema = new mongoose.Schema({
   brand: {
     type: String,
     required: true,
-    enum: ['Chery', 'Geely', 'MG', 'Haval', 'Great Wall', 'Changan', 'BYD']
+    enum: EV_BRANDS
   },
   
   model: {
     type: String,
     required: true
-    // Examples: Tiggo, Tiggo 7, Tiggo 8, Coolray, HS, Jolion, etc.
   },
   
   year: {
@@ -27,14 +33,33 @@ const vehicleSchema = new mongoose.Schema({
     max: new Date().getFullYear() + 1
   },
   
+  drivetrain: {
+    type: String,
+    enum: DRIVETRAINS
+  },
+  
+  batteryCapacityKwh: {
+    type: Number,
+    min: 0
+  },
+  
+  connectorType: {
+    type: String,
+    enum: CONNECTOR_TYPES
+  },
+  
+  voltageClass: {
+    type: String,
+    enum: VOLTAGE_CLASSES
+  },
+  
   engineType: {
     type: String
-    // e.g., "1.5L Turbo", "2.0L", "Electric"
   },
   
   transmission: {
     type: String,
-    enum: ['Manual', 'Automatic', 'CVT']
+    enum: TRANSMISSIONS
   },
   
   vin: {
@@ -47,7 +72,7 @@ const vehicleSchema = new mongoose.Schema({
   nickname: {
     type: String,
     trim: true
-    // User-friendly name like "My Tiggo" or "Family Car"
+    // User-friendly name like "My Tesla" or "Family EV"
   },
   
   isPrimary: {

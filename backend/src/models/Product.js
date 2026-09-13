@@ -1,18 +1,25 @@
 const mongoose = require('mongoose');
+const {
+  EV_BRANDS,
+  PRODUCT_TRANSMISSIONS,
+  DRIVETRAINS,
+  CONNECTOR_TYPES,
+  VOLTAGE_CLASSES,
+  CURRENCIES
+} = require('../config/evCatalog');
 
-// Product compatibility sub-schema - CRITICAL FOR AI FEATURES ★
+// Product compatibility sub-schema used by NLP search and vehicle matching
 const compatibilitySchema = new mongoose.Schema({
   brand: {
     type: String,
     required: true,
     index: true,
-    enum: ['Chery', 'Geely', 'MG', 'Haval', 'Great Wall', 'Changan', 'BYD']
+    enum: EV_BRANDS
   },
   model: {
     type: String,
     required: true,
     index: true
-    // Examples: Tiggo, Coolray, HS, Jolion, Wingle, etc.
   },
   yearFrom: {
     type: Number,
@@ -26,13 +33,28 @@ const compatibilitySchema = new mongoose.Schema({
     min: 2000,
     max: 2030
   },
+  drivetrain: {
+    type: String,
+    enum: DRIVETRAINS
+  },
+  batteryCapacityKwh: {
+    type: Number,
+    min: 0
+  },
+  connectorType: {
+    type: String,
+    enum: CONNECTOR_TYPES
+  },
+  voltageClass: {
+    type: String,
+    enum: VOLTAGE_CLASSES
+  },
   engineType: {
     type: String
-    // e.g., "1.5L Turbo", "2.0L", "Electric"
   },
   transmission: {
     type: String,
-    enum: ['Manual', 'Automatic', 'CVT', 'Both']
+    enum: PRODUCT_TRANSMISSIONS
   },
   notes: {
     ar: String,
@@ -93,8 +115,8 @@ const productSchema = new mongoose.Schema({
   
   currency: {
     type: String,
-    enum: ['SAR', 'EUR'],
-    default: 'SAR'
+    enum: CURRENCIES,
+    default: 'EUR'
   },
   
   // Stock management

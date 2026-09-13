@@ -73,7 +73,7 @@ export default function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">CA</span>
+              <span className="text-white font-bold text-xl">EV</span>
             </div>
             <div className="hidden sm:block">
               <h1 className="text-lg font-bold text-gray-900 dark:text-white">

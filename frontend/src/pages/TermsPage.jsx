@@ -11,7 +11,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">1. Acceptance of Terms</h2>
           <p>
-            By accessing and using the Chinese Auto Parts platform, you agree to be bound by these Terms and Conditions. 
+            By accessing and using the EV Auto Parts platform, you agree to be bound by these Terms and Conditions. 
             If you do not agree, please do not use our services.
           </p>
         </section>
@@ -47,7 +47,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">5. Limitation of Liability</h2>
           <p>
-            To the fullest extent permitted by law, Chinese Auto Parts shall not be liable for any indirect, 
+            To the fullest extent permitted by law, EV Auto Parts shall not be liable for any indirect, 
             incidental, special, or consequential damages arising from your use of the service or purchase of products.
           </p>
         </section>

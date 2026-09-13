@@ -81,8 +81,8 @@ const orderSchema = new mongoose.Schema({
   
   currency: {
     type: String,
-    enum: ['SAR', 'EUR'],
-    default: 'SAR'
+    enum: ['EUR', 'SYP'],
+    default: 'EUR'
   },
   
   // Shipping address
