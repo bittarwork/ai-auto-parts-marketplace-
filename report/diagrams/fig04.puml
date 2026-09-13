@@ -1,0 +1,30 @@
+@startuml
+start
+:User submits natural-language query;
+if (Query empty?) then (yes)
+  :Return HTTP 400;
+  stop
+endif
+:Call LLM extraction (gpt-4o-mini, JSON output);
+if (LLM call succeeded?) then (yes)
+  :Parse JSON (partType, brand, model, year, keywords);
+else (no / timeout / invalid key)
+  :Keyword fallback extraction\n(confidence = 30, fallback = true);
+endif
+:Normalize brand & model via alias maps;
+:Compute confidence (partType 40, brand 30, model 20, year 10);
+:Strategy = strict (all criteria);
+repeat
+  :Query MongoDB ($text + filters);
+  if (Results found?) then (yes)
+    break
+  else (no)
+    :Relax next criterion\n(no_year -> no_model -> no_brand);
+  endif
+repeat while (Strategies remaining?) is (yes)
+->no;
+:Score results (text, brand, model, year,\nvehicle compatibility, popularity, rating, stock, featured, recency);
+:Sort by score, apply limit;
+:Return results + analysis + strategy used;
+stop
+@enduml

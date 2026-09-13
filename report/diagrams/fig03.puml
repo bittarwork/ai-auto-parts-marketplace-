@@ -1,0 +1,9 @@
+@startgantt
+printscale weekly
+Project starts 2026-02-16
+[Phase 1: Customer modules completion] starts 2026-02-18 and ends 2026-02-18
+[Phase 2: Progressive search + Admin panel] starts 2026-02-19 and ends 2026-02-19
+[Phase 3: Product form & settings refinements] starts 2026-04-16 and ends 2026-04-16
+[Phase 4: Full EV adaptation & access control] starts 2026-09-13 and ends 2026-09-13
+[Phase 5: Testing & report] starts 2026-09-13 and ends 2026-09-14
+@endgantt

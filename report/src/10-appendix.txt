@@ -1,0 +1,86 @@
+@FRONT الملاحق
+
+## الملحق أ: تشغيل النظام في بيئة التطوير
+
+تُشغَّل المنصة محلياً بالخطوات الآتية، المستخلصة من سكربتات `package.json` في المشروع:
+
+1. تثبيت التبعيات في المجلدَين: `npm install` داخل `backend` وداخل `frontend`.
+2. إنشاء ملف `backend/.env` بالمتغيّرات المذكورة في الجدول 12 (على الأقل: `MONGODB_URI`، `JWT_SECRET`، `FRONTEND_URL`، `OPENAI_API_KEY`).
+3. تهيئة قاعدة البيانات التجريبية: `npm run seed` داخل `backend` (ويمسحها الخيار `npm run seed:clear`).
+4. تشغيل الخادم: `npm run dev` داخل `backend` (المنفذ 5000 افتراضياً).
+5. تشغيل الواجهة: `npm run dev` داخل `frontend` (المنفذ 5173 افتراضياً).
+
+ويُفترض وجود خادم MongoDB يعمل محلياً، أما Redis فاختياري.
+
+## الملحق ب: نماذج من استجابات واجهة البرمجة المسجّلة أثناء الاختبار
+
+فيما يلي قيم حقيقية مختصرة من استجابات سُجّلت أثناء تنفيذ حالات الاختبار في الفصل السادس (حُذفت المعرّفات الطويلة والحقول غير الجوهرية للإيجاز).
+
+استجابة إنشاء الطلب (TC-10):
+
+```json
+{
+  "success": true,
+  "data": {
+    "orderNumber": "ORD-20260913-0011",
+    "status": "pending",
+    "paymentMethod": "cash_on_delivery",
+    "paymentStatus": "pending",
+    "subtotal": 578,
+    "tax": 109.82,
+    "shipping": 0,
+    "total": 687.82,
+    "currency": "EUR"
+  }
+}
+```
+
+استجابة سلة الزائر (TC-05):
+
+```json
+{
+  "success": true,
+  "data": {
+    "totalItems": 2,
+    "subtotal": 290,
+    "tax": 55.1,
+    "shipping": 0,
+    "total": 345.1,
+    "currency": "EUR"
+  }
+}
+```
+
+ملخّص تحليل البحث الذكي في المسار البديل (TC-02):
+
+```json
+{
+  "partType": "battery",
+  "brand": "Tesla",
+  "model": "model",
+  "year": 2022,
+  "confidence": 30,
+  "fallback": true,
+  "searchStrategy": "strict",
+  "resultsCount": 5
+}
+```
+
+## الملحق ج: مصادر مخططات PlantUML
+
+أُنشئت جميع المخططات الاثني عشر الواردة في الفصول الأول والثالث والرابع (الأشكال 1 إلى 12) بصيغة PlantUML النصية، وتُحفَظ مصادرها الكاملة في مجلد `report/diagrams` داخل مستودع المشروع بأسماء `fig01.puml` إلى `fig12.puml` مقابل ترقيم الأشكال في التقرير، بحيث يمكن إعادة توليدها أو تعديلها بأداة PlantUML [16] أو عبر سكربت التوليد `report/build_report.py`. وفيما يلي، على سبيل المثال، مصدر الشكل 10 (مخطط حالة الطلب):
+
+```plantuml-source
+@startuml
+[*] --> pending : createOrder()
+pending --> confirmed : admin updates status
+pending --> cancelled : customer cancelOrder() or admin
+confirmed --> processing : admin
+confirmed --> cancelled : customer cancelOrder() or admin
+processing --> shipped : admin
+processing --> cancelled : customer cancelOrder() or admin
+shipped --> delivered : admin
+delivered --> [*]
+cancelled --> [*]
+@enduml
+```

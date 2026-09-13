@@ -1,0 +1,29 @@
+@startuml
+actor Customer
+participant "CheckoutPage\n(React)" as UI
+participant "cartRoutes" as CR
+participant "orderRoutes" as OR
+participant "orderController" as OC
+participant "pricing util\n(getPricingSettings,\ncalculateTotals)" as P
+database "MongoDB" as DB
+Customer -> UI : open checkout
+UI -> CR : POST /api/cart/validate (JWT)
+CR -> DB : load Cart + Products
+CR --> UI : {isValid, issues[], totals}
+Customer -> UI : choose address & payment, confirm
+UI -> OR : POST /api/orders\n{shippingAddress, paymentMethod, notes}
+OR -> OC : protect -> validate -> createOrder()
+OC -> DB : Cart.findOne({user}).populate(items.product)
+loop each cart item
+  OC -> OC : check isActive and stock >= quantity
+  OC -> OC : build orderItem with productSnapshot
+end
+OC -> P : getPricingSettings() -> Settings
+OC -> P : calculateTotals(subtotal)\n(tax 19%, shipping 12 EUR, free >= 150 EUR)
+OC -> DB : Order.create({status: pending,\npaymentStatus: pending, statusHistory[0]})
+DB --> OC : order (orderNumber generated pre-validate)
+OC -> DB : Product.findByIdAndUpdate($inc stock -qty, purchaseCount +qty)
+OC -> DB : cart.items = []; cart.save()
+OC --> UI : 201 {order}
+UI --> Customer : navigate to /orders/:id
+@enduml

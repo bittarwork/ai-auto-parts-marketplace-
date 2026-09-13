@@ -1,0 +1,79 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 15
+skinparam ranksep 35
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+hide circle
+class User {
+  email <<unique>>, password <<bcrypt>>
+  role: customer|supplier|administrator
+  addresses[] <<embedded>>
+  isActive
+}
+class Product {
+  name{ar,en}, partNumber
+  price, currency: EUR|SYP, stock
+  compatibility[] {brand, model,
+    yearFrom, yearTo, connector, voltage}
+  specifications[], images[]
+  averageRating, viewCount, purchaseCount
+  isActive, isFeatured
+}
+class Category {
+  name{ar,en}, slug <<unique>>
+  order, isActive
+}
+class Vehicle {
+  brand <<EV_BRANDS>>, model, year
+  connectorType, voltageClass
+  isPrimary, isActive
+}
+class Cart {
+  items[] {product, quantity, priceAtAdd}
+  lastActivity
+}
+class GuestCart {
+  sessionId <<unique>>
+  items[] {product, quantity, priceAtAdd}
+  expiresAt <<TTL 30d>>
+}
+class Order {
+  orderNumber <<unique>>
+  items[] {product, quantity, price, snapshot}
+  subtotal, tax, shipping, total, currency
+  paymentMethod, paymentStatus
+  status, statusHistory[]
+}
+class Wishlist {
+  products[]
+}
+class ChatSession {
+  sessionId <<unique>>
+  messages[] {role, content, suggestedProducts}
+  context.productId, lastMessageAt
+}
+class Settings <<singleton>> {
+  currency, taxRate
+  shippingFlatRate, freeShippingThreshold
+}
+class ProductNotification {
+  notifiedAt
+}
+User "1" -- "0..*" Vehicle
+User "1" -- "0..1" Cart
+User "1" -- "0..1" Wishlist
+User "1" -- "0..*" Order : customer
+User "0..1" -- "0..*" ChatSession
+User "1" -- "0..*" Product : supplier
+Product "0..*" --> "1" Category
+Category "0..*" --> "0..1" Category : parent
+Cart "0..*" --> "0..*" Product : items
+GuestCart "0..*" --> "0..*" Product : items
+Order "1..*" --> "1..*" Product : items
+Wishlist "0..*" --> "0..*" Product
+ChatSession "0..*" --> "0..1" Product : context
+ProductNotification "0..*" --> "1" Product
+ProductNotification "0..*" --> "1" User
+@enduml

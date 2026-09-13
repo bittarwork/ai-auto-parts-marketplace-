@@ -1,0 +1,39 @@
+@startuml
+actor User
+participant "IntelligentSearchBar\n(React)" as UI
+participant "aiRoutes\n/api/ai/search" as R
+participant "aiSearchController" as C
+participant "nlpProcessorService" as NLP
+participant "OpenAI API" as OAI
+participant "aiSearchService" as S
+participant "compatibilityService" as CS
+participant "searchRankingService" as RK
+database "MongoDB" as DB
+User -> UI : type query, submit
+UI -> R : POST {query, limit}\n(optional JWT)
+R -> C : optionalAuth -> intelligentSearch()
+C -> NLP : processQuery(query)
+NLP -> OAI : chat.completions (JSON, low temperature)
+alt success
+  OAI --> NLP : {partType, brand, model, year, keywords}
+else failure / invalid key / timeout
+  NLP -> NLP : fallbackKeywordExtraction()\nconfidence = 30
+end
+NLP --> C : normalized criteria + confidence
+C -> S : search(criteria, user)
+loop strategies: strict, no_year, no_model, no_brand
+  S -> DB : find({$text, isActive, filters})
+  DB --> S : products
+  break products.length > 0
+  end
+end
+opt user authenticated
+  S -> DB : Vehicle.find({user, isActive})
+  S -> CS : annotate compatibilityStatus per product
+end
+S -> RK : rankSearchResults(products, criteria, vehicles)
+RK --> S : sorted products + scoreBreakdown
+S --> C : results, strategy, analysis
+C --> UI : 200 {success, data}
+UI --> User : render results + AI analysis banner
+@enduml

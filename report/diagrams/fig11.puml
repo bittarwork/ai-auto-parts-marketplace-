@@ -1,0 +1,35 @@
+@startuml
+actor User
+participant "ChatWidget\n(React)" as UI
+participant "/api/ai/chatbot" as R
+participant "chatbotService" as CB
+database "Redis\n(optional)" as RD
+database "MongoDB" as DB
+participant "OpenAI API" as OAI
+User -> UI : send message
+UI -> R : POST {message, sessionId, context.productId}
+R -> CB : optionalAuth -> processMessage()
+CB -> RD : get history (if available)
+alt cache miss / Redis disabled
+  CB -> DB : ChatSession.findOne({sessionId})
+end
+opt user authenticated
+  CB -> DB : Vehicle.find({user}) -> vehicles context
+end
+opt context.productId
+  CB -> DB : Product.findById -> current product context
+end
+CB -> CB : build system prompt\n(store info, vehicles, product, last 5 messages)
+CB -> OAI : chat.completions (temperature 0.7)
+alt success
+  OAI --> CB : assistant reply
+  CB -> DB : findMentionedProducts(reply, message)
+  CB -> DB : ChatSession upsert (user + assistant messages)
+  CB -> RD : cache history
+  CB --> UI : 200 {message, suggestedProducts, sessionId}
+else failure
+  CB -> CB : getFallbackResponse(message)\n(rule-based: price / shipping / compatibility / generic)
+  CB --> UI : 200 {message, error: true, fallback}\n(session not persisted)
+end
+UI --> User : render reply + product cards
+@enduml

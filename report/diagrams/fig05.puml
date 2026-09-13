@@ -1,0 +1,28 @@
+@startuml
+|Browser|
+start
+:Guest adds product to cart;
+if (cart_session_id in localStorage?) then (no)
+  :Generate session id and store it;
+endif
+:Send POST /api/cart/items\nwith X-Cart-Session header;
+|Backend|
+:Validate product & stock;
+:Upsert GuestCart by sessionId\n(expiresAt = now + 30 days);
+:Return cart with subtotal, tax, shipping, total (EUR);
+|Browser|
+:Guest logs in / registers\n(body includes cartSessionId);
+|Backend|
+:Authenticate user & issue JWT;
+if (GuestCart exists for sessionId?) then (yes)
+  :Load or create user Cart;
+  :Merge items (sum quantities per product);
+  :Save user Cart;
+  :Delete GuestCart;
+endif
+:Return token + user;
+|Browser|
+:Remove cart_session_id from localStorage;
+:Refresh cart from GET /api/cart (JWT);
+stop
+@enduml

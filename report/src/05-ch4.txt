@@ -1,0 +1,456 @@
+# التصميم
+
+## مقدمة الفصل
+
+يعرض هذا الفصل التصميم المعماري والتفصيلي لنظام EV Auto Parts استناداً إلى المتطلبات المحلّلة في الفصل الثالث. يبدأ بالمعمارية العامة وتوزيع المكوّنات، ثم تصميم قاعدة البيانات ومخطط الصفوف، ثم التصميم السلوكي عبر مخططات التسلسل والحالة للعمليات الجوهرية، ثم تصميم واجهة البرمجة، وينتهي بتصميم الواجهة الأمامية وبنية الشيفرة.
+
+## المعمارية العامة
+
+### النمط المعماري
+
+اعتُمدت معمارية ثلاثية الطبقات (Three-tier) من نمط العميل–الخادم، مع فصل صريح داخل الخادم إلى طبقات فرعية: المسارات (Routes)، والوسطاء (Middleware)، والمتحكّمات (Controllers)، والخدمات (Services)، والنماذج (Models). ويُتيح هذا الفصل اختبار كل طبقة على حدة وتبديل التنفيذ الداخلي دون التأثير في الواجهة الخارجية؛ فمثلاً تستطيع خدمة الاستخراج اللغوي التحوّل من OpenAI إلى مزوّد آخر دون تغيير في المتحكّمات.
+
+يوضّح الشكل 6 المكوّنات الرئيسية للنظام وتبعياتها.
+
+FIGURE: مخطط المكوّنات للمعمارية العامة لنظام EV Auto Parts
+```plantuml
+@startuml
+skinparam componentStyle rectangle
+skinparam linetype ortho
+package "Frontend (React 18 SPA)" {
+  [Pages] --> [Components]
+  [Pages] --> [Contexts\n(Cart, Wishlist, Theme)]
+  [Pages] --> [API Services\n(Axios)]
+  [Components] --> [Contexts\n(Cart, Wishlist, Theme)]
+}
+package "Backend (Express 4)" {
+  [Routes] --> [Middleware\n(protect, authorize,\nvalidate, rate limit)]
+  [Routes] --> [Controllers]
+  [Controllers] --> [Services]
+  [Controllers] --> [Models\n(Mongoose)]
+  [Services] --> [Models\n(Mongoose)]
+  package "Services" {
+    [nlpProcessorService]
+    [aiSearchService]
+    [searchRankingService]
+    [compatibilityService]
+    [recommendationService]
+    [chatbotService]
+  }
+  [Config\n(environment, openai,\nredis, evCatalog)]
+}
+database "MongoDB" as DB
+cloud "OpenAI API" as OAI
+database "Redis (optional)" as RD
+[API Services\n(Axios)] --> [Routes] : HTTP/JSON
+[Models\n(Mongoose)] --> DB
+[nlpProcessorService] --> OAI
+[chatbotService] --> OAI
+[aiSearchService] ..> RD
+[chatbotService] ..> RD
+@enduml
+```
+
+يُبيّن الشكل 6 أن الواجهة الأمامية لا تتصل بقاعدة البيانات أو بخدمة OpenAI مباشرة، بل تمرّ كل العمليات عبر واجهة REST، وأن خدمات الذكاء الاصطناعي الست تتوزّع بين خدمتَين تعتمدان على النموذج اللغوي (`nlpProcessorService` و`chatbotService`) وأربع خدمات حتمية بالكامل.
+
+### مبادئ التصميم المتّبعة
+
+- **الخادم مصدر الحقيقة (Server-side Truth):** كل حسابات الأسعار والضرائب والشحن والمخزون تُجرى على الخادم؛ الواجهة تعرض فقط.
+- **انعدام الحالة:** لا تُخزَّن حالة جلسة على الخادم؛ الهوية تُنقل عبر JWT، وهوية الزائر عبر معرّف جلسة في ترويسة `X-Cart-Session`.
+- **التدهور الرشيق:** كل اعتماد خارجي (OpenAI، Redis) له مسار بديل لا يوقف الخدمة.
+- **الحذف الناعم (Soft Delete):** المنتجات والفئات والمركبات تُعطَّل بعلم `isActive` بدلاً من حذفها فعلياً، حفاظاً على سلامة الطلبات التاريخية.
+- **لقطات البيانات (Snapshots):** يحتفظ الطلب بنسخة من اسم المنتج ورقمه وصوره وسعره وقت الشراء، فلا تتأثر الطلبات القديمة بتعديل المنتج لاحقاً.
+- **استجابة موحّدة:** كل الاستجابات بصيغة `{ success, message, data }` مع رموز HTTP دلالية.
+
+## تصميم قاعدة البيانات
+
+### اختيار النموذج الوثائقي
+
+صُمّمت قاعدة البيانات على MongoDB بإحدى عشرة مجموعة (Collection) تُعرَّف بمخططات Mongoose. ورُوعي في التصميم تضمين (Embedding) البيانات التي تُقرأ دائماً مع مستندها الأب (مصفوفة التوافق والمواصفات داخل المنتج، والعناوين داخل المستخدم، وعناصر السلة داخل السلة، والرسائل داخل جلسة المحادثة)، والإشارة (Referencing) بمعرّفات ObjectId إلى الكيانات المستقلة (المستخدم، المنتج، الفئة). يلخّص الجدول 8 المجموعات وحقولها الرئيسية والفهارس.
+
+TABLE: مجموعات قاعدة البيانات وحقولها الرئيسية وفهارسها
+| المجموعة | الحقول الرئيسية | العلاقات | الفهارس والقيود البارزة |
+|---|---|---|---|
+| users | name, email, password (bcrypt), phone, role {customer, supplier, administrator}, addresses[], language, isActive, passwordResetToken/Expires | – | email فريد؛ إخفاء password عند التسلسل |
+| products | name{ar,en}, description{ar,en}, partNumber, category→categories, price, currency {EUR,SYP}, stock, lowStockThreshold, images[], specifications[], compatibility[] {brand, model, yearFrom, yearTo, drivetrain, batteryCapacityKwh, connectorType, voltageClass}, searchKeywords, averageRating, totalReviews, supplier→users, warranty, isActive, isFeatured, viewCount, purchaseCount | category, supplier | فهرس نصي على الاسم والوصف والكلمات المفتاحية ورقم القطعة؛ فهارس على الفئة والماركة والسعر |
+| categories | name{ar,en}, description, slug, image, parent→categories, order, isActive, seo | parent (ذاتية) | slug فريد؛ هرمية بمستويَين (9 رئيسية + 17 فرعية في البذر) |
+| orders | orderNumber, customer→users, items[] {product, quantity, price, productSnapshot}, subtotal, tax, shipping, discount, total, currency, shippingAddress, paymentMethod {card, cash_on_delivery, bank_transfer}, paymentStatus, status, statusHistory[], customerNotes, cancelledBy | customer, items.product | orderNumber فريد بصيغة ORD-YYYYMMDD-NNNN يُولَّد في خطاف ما قبل التحقق |
+| carts | user→users, items[] {product, quantity, priceAtAdd, addedAt}, lastActivity | user, items.product | user فريد (سلة واحدة لكل مستخدم) |
+| guestcarts | sessionId, items[], lastActivity, expiresAt | items.product | sessionId فريد؛ فهرس TTL على expiresAt (30 يوماً) |
+| vehicles | user→users, brand (enum 8 ماركات), model, year, drivetrain, batteryCapacityKwh, connectorType, voltageClass, vin, nickname, isPrimary, isActive, mileage, notes | user | فهرس على user؛ مركبة أساسية واحدة لكل مستخدم |
+| wishlists | user→users, products[] | user, products | user فريد |
+| chatsessions | sessionId, user→users (اختياري), title, messages[] {role, content, suggestedProducts[], timestamp}, context {productId}, isActive, lastMessageAt | user, context.productId | sessionId فريد؛ فهرس على user وlastMessageAt |
+| settings | siteName, contactEmail, currency {EUR,SYP}, defaultLanguage, shippingFlatRate, freeShippingThreshold, taxRate, lowStockThreshold, notifyOnNewOrder, notifyOnLowStock | – | مستند وحيد (Singleton) يُنشأ بالقيم الافتراضية عند أول طلب |
+| productnotifications | product→products, user→users, notifiedAt | product, user | – |
+
+### مخطط الصفوف
+
+يعرض الشكل 7 مخطط الصفوف لنماذج المجال وعلاقاتها كما هي معرَّفة في مخططات Mongoose، مع الاقتصار على الحقول الجوهرية لضمان القراءة.
+
+FIGURE: مخطط الصفوف لنماذج المجال في EV Auto Parts
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 15
+skinparam ranksep 35
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+hide circle
+class User {
+  email <<unique>>, password <<bcrypt>>
+  role: customer|supplier|administrator
+  addresses[] <<embedded>>
+  isActive
+}
+class Product {
+  name{ar,en}, partNumber
+  price, currency: EUR|SYP, stock
+  compatibility[] {brand, model,
+    yearFrom, yearTo, connector, voltage}
+  specifications[], images[]
+  averageRating, viewCount, purchaseCount
+  isActive, isFeatured
+}
+class Category {
+  name{ar,en}, slug <<unique>>
+  order, isActive
+}
+class Vehicle {
+  brand <<EV_BRANDS>>, model, year
+  connectorType, voltageClass
+  isPrimary, isActive
+}
+class Cart {
+  items[] {product, quantity, priceAtAdd}
+  lastActivity
+}
+class GuestCart {
+  sessionId <<unique>>
+  items[] {product, quantity, priceAtAdd}
+  expiresAt <<TTL 30d>>
+}
+class Order {
+  orderNumber <<unique>>
+  items[] {product, quantity, price, snapshot}
+  subtotal, tax, shipping, total, currency
+  paymentMethod, paymentStatus
+  status, statusHistory[]
+}
+class Wishlist {
+  products[]
+}
+class ChatSession {
+  sessionId <<unique>>
+  messages[] {role, content, suggestedProducts}
+  context.productId, lastMessageAt
+}
+class Settings <<singleton>> {
+  currency, taxRate
+  shippingFlatRate, freeShippingThreshold
+}
+class ProductNotification {
+  notifiedAt
+}
+User "1" -- "0..*" Vehicle
+User "1" -- "0..1" Cart
+User "1" -- "0..1" Wishlist
+User "1" -- "0..*" Order : customer
+User "0..1" -- "0..*" ChatSession
+User "1" -- "0..*" Product : supplier
+Product "0..*" --> "1" Category
+Category "0..*" --> "0..1" Category : parent
+Cart "0..*" --> "0..*" Product : items
+GuestCart "0..*" --> "0..*" Product : items
+Order "1..*" --> "1..*" Product : items
+Wishlist "0..*" --> "0..*" Product
+ChatSession "0..*" --> "0..1" Product : context
+ProductNotification "0..*" --> "1" Product
+ProductNotification "0..*" --> "1" User
+@enduml
+```
+
+يُظهر الشكل 7 محورية صنف `Product` الذي ترتبط به السلال والطلبات وقوائم الأمنيات وجلسات المحادثة، وأن التوافق مُضمَّن داخله لا في مجموعة مستقلة، وأن `GuestCart` نسخة موازية لـ `Cart` تُعرَّف بمعرّف جلسة بدلاً من مستخدم.
+
+## التصميم السلوكي
+
+### تسلسل البحث الذكي
+
+يعرض الشكل 8 تسلسل الرسائل بين المكوّنات عند تنفيذ بحث ذكي لمستخدم مسجّل.
+
+FIGURE: مخطط التسلسل لعملية البحث الذكي باللغة الطبيعية
+```plantuml
+@startuml
+actor User
+participant "IntelligentSearchBar\n(React)" as UI
+participant "aiRoutes\n/api/ai/search" as R
+participant "aiSearchController" as C
+participant "nlpProcessorService" as NLP
+participant "OpenAI API" as OAI
+participant "aiSearchService" as S
+participant "compatibilityService" as CS
+participant "searchRankingService" as RK
+database "MongoDB" as DB
+User -> UI : type query, submit
+UI -> R : POST {query, limit}\n(optional JWT)
+R -> C : optionalAuth -> intelligentSearch()
+C -> NLP : processQuery(query)
+NLP -> OAI : chat.completions (JSON, low temperature)
+alt success
+  OAI --> NLP : {partType, brand, model, year, keywords}
+else failure / invalid key / timeout
+  NLP -> NLP : fallbackKeywordExtraction()\nconfidence = 30
+end
+NLP --> C : normalized criteria + confidence
+C -> S : search(criteria, user)
+loop strategies: strict, no_year, no_model, no_brand
+  S -> DB : find({$text, isActive, filters})
+  DB --> S : products
+  break products.length > 0
+  end
+end
+opt user authenticated
+  S -> DB : Vehicle.find({user, isActive})
+  S -> CS : annotate compatibilityStatus per product
+end
+S -> RK : rankSearchResults(products, criteria, vehicles)
+RK --> S : sorted products + scoreBreakdown
+S --> C : results, strategy, analysis
+C --> UI : 200 {success, data}
+UI --> User : render results + AI analysis banner
+@enduml
+```
+
+يُبرز الشكل 8 نقطة التفرّع الوحيدة الاحتمالية (استدعاء OpenAI) وكيف يُستوعب فشلها داخل الخدمة، كما يُظهر أن التحقق من التوافق يُدمج في نتائج البحث للمستخدم المسجّل قبل مرحلة الترتيب، مما يمنح المنتجات المتوافقة أعلى وزن.
+
+### تسلسل إتمام الطلب
+
+يوضّح الشكل 9 تسلسل إنشاء الطلب من السلة.
+
+FIGURE: مخطط التسلسل لإتمام الطلب وإنشاء الطلبية
+```plantuml
+@startuml
+actor Customer
+participant "CheckoutPage\n(React)" as UI
+participant "cartRoutes" as CR
+participant "orderRoutes" as OR
+participant "orderController" as OC
+participant "pricing util\n(getPricingSettings,\ncalculateTotals)" as P
+database "MongoDB" as DB
+Customer -> UI : open checkout
+UI -> CR : POST /api/cart/validate (JWT)
+CR -> DB : load Cart + Products
+CR --> UI : {isValid, issues[], totals}
+Customer -> UI : choose address & payment, confirm
+UI -> OR : POST /api/orders\n{shippingAddress, paymentMethod, notes}
+OR -> OC : protect -> validate -> createOrder()
+OC -> DB : Cart.findOne({user}).populate(items.product)
+loop each cart item
+  OC -> OC : check isActive and stock >= quantity
+  OC -> OC : build orderItem with productSnapshot
+end
+OC -> P : getPricingSettings() -> Settings
+OC -> P : calculateTotals(subtotal)\n(tax 19%, shipping 12 EUR, free >= 150 EUR)
+OC -> DB : Order.create({status: pending,\npaymentStatus: pending, statusHistory[0]})
+DB --> OC : order (orderNumber generated pre-validate)
+OC -> DB : Product.findByIdAndUpdate($inc stock -qty, purchaseCount +qty)
+OC -> DB : cart.items = []; cart.save()
+OC --> UI : 201 {order}
+UI --> Customer : navigate to /orders/:id
+@enduml
+```
+
+يُبيّن الشكل 9 أن التحقق يُجرى مرتَين (قبل العرض وعند الإنشاء) حمايةً من تغيّر المخزون بين الخطوتَين، وأن خصم المخزون وتفريغ السلة يتمّان بعد إنشاء الطلب مباشرة. ويُلاحَظ من ناحية التصميم أن هذه العمليات الثلاث (إنشاء الطلب، خصم المخزون، تفريغ السلة) لا تُنفَّذ ضمن معاملة (Transaction) واحدة، وهو قيد يُناقَش في الفصل السابع.
+
+### مخطط حالة الطلب
+
+يمرّ الطلب بحالات معرَّفة في تعداد `status`. ويعرض الشكل 10 الانتقالات المقصودة في التصميم.
+
+FIGURE: مخطط الحالة لدورة حياة الطلب
+```plantuml
+@startuml
+[*] --> pending : createOrder()
+pending --> confirmed : admin updates status
+pending --> cancelled : customer cancelOrder()\nor admin
+confirmed --> processing : admin
+confirmed --> cancelled : customer cancelOrder()\nor admin
+processing --> shipped : admin
+processing --> cancelled : customer cancelOrder()\nor admin
+shipped --> delivered : admin
+delivered --> [*]
+cancelled --> [*]
+note right of cancelled
+  Stock is restored for each item
+  when the order becomes cancelled.
+end note
+note bottom of pending
+  Payment status is tracked separately:
+  pending | paid | failed | refunded
+end note
+@enduml
+```
+
+يعكس الشكل 10 الانتقالات المنطقية المقصودة؛ إلا أن التنفيذ الحالي لمسار تحديث الحالة الإداري لا يفرض هذه الانتقالات، فيقبل مثلاً الانتقال من `cancelled` إلى `confirmed`، كما أثبت الاختبار الموثّق في الفصل السادس. أما إلغاء العميل فيُرفض فقط إذا كان الطلب في حالة `shipped` أو `delivered` أو `cancelled`.
+
+### تسلسل المحادثة مع المساعد الذكي
+
+يوضّح الشكل 11 تدفّق رسالة محادثة من المستخدم إلى المساعد.
+
+FIGURE: مخطط التسلسل لمعالجة رسالة في مساعد المحادثة
+```plantuml
+@startuml
+actor User
+participant "ChatWidget\n(React)" as UI
+participant "/api/ai/chatbot" as R
+participant "chatbotService" as CB
+database "Redis\n(optional)" as RD
+database "MongoDB" as DB
+participant "OpenAI API" as OAI
+User -> UI : send message
+UI -> R : POST {message, sessionId, context.productId}
+R -> CB : optionalAuth -> processMessage()
+CB -> RD : get history (if available)
+alt cache miss / Redis disabled
+  CB -> DB : ChatSession.findOne({sessionId})
+end
+opt user authenticated
+  CB -> DB : Vehicle.find({user}) -> vehicles context
+end
+opt context.productId
+  CB -> DB : Product.findById -> current product context
+end
+CB -> CB : build system prompt\n(store info, vehicles, product, last 5 messages)
+CB -> OAI : chat.completions (temperature 0.7)
+alt success
+  OAI --> CB : assistant reply
+  CB -> DB : findMentionedProducts(reply, message)
+  CB -> DB : ChatSession upsert (user + assistant messages)
+  CB -> RD : cache history
+  CB --> UI : 200 {message, suggestedProducts, sessionId}
+else failure
+  CB -> CB : getFallbackResponse(message)\n(rule-based: price / shipping / compatibility / generic)
+  CB --> UI : 200 {message, error: true, fallback}\n(session not persisted)
+end
+UI --> User : render reply + product cards
+@enduml
+```
+
+يُظهر الشكل 11 أن سياق المحادثة يُبنى من ثلاثة مصادر (مركبات المستخدم، المنتج الحالي، آخر خمس رسائل) قبل استدعاء النموذج، وأن الردّ البديل عند الفشل قائم على كلمات مفتاحية بسيطة ولا يُحفَظ في جلسة، وهو ما لاحظه الاختبار في الفصل السادس.
+
+## تصميم واجهة البرمجة (REST API)
+
+صُمّمت واجهة البرمجة على تسع وحدات تحت البادئة `/api`. ويلخّص الجدول 9 نقاط النهاية الرئيسية مع مستوى الوصول المطبّق فعلياً بالوسطاء.
+
+TABLE: ملخّص نقاط نهاية واجهة البرمجة حسب الوحدة ومستوى الوصول
+| الوحدة | نقاط النهاية الرئيسية | مستوى الوصول |
+|---|---|---|
+| /api/auth | POST register, login, forgot-password, logout؛ PUT reset-password, profile, change-password؛ GET me؛ POST/PUT/DELETE/PATCH addresses | عام لمسارات الدخول والتسجيل (مع authLimiter)؛ مصادق للبقية |
+| /api/products | GET /, /featured, /category/:id, /:id؛ POST /:id/notify؛ POST /؛ PUT /bulk, /:id؛ DELETE /:id؛ PATCH /:id/stock؛ GET /admin/stats | قراءة عامة (apiLimiter)؛ إنشاء/تعديل/مخزون: مدير أو مورّد؛ حذف وbulk وإحصاءات: مدير فقط |
+| /api/categories | GET /, /top, /slug/:slug, /:id؛ POST /؛ PUT /:id, /admin/reorder؛ DELETE /:id | قراءة عامة؛ كتابة: مدير فقط |
+| /api/cart | GET /, /count؛ POST /items؛ PUT /items/:productId؛ DELETE /items/:productId, /؛ POST /validate | optionalAuth (زائر عبر X-Cart-Session أو مستخدم عبر JWT)؛ validate مصادق فقط |
+| /api/orders | GET /, /:id؛ POST /؛ PUT /:id/cancel؛ GET /admin/all, /admin/stats؛ PUT /:id/status؛ PATCH /:id/payment | مصادق للعميل؛ مسارات admin وتحديث الحالة والدفع: مدير فقط |
+| /api/vehicles | GET /, /primary, /:id؛ POST /؛ PUT /:id؛ DELETE /:id؛ PATCH /:id/primary | مصادق؛ مع فحص ملكية المركبة |
+| /api/wishlist | GET /, /check/:productId؛ POST /:productId؛ DELETE /:productId | مصادق |
+| /api/ai | POST /search, /compatibility, /chatbot؛ GET /suggestions, /related-searches, /compatible-products/:vehicleId, /recommendations, /similar/:productId, /frequently-bought-together/:productId, /popular, /trending, /chatbot/quick-actions, /chatbot/sessions, /chatbot/sessions/:sessionId؛ DELETE /chatbot/sessions/:sessionId, /chatbot/:sessionId | search وchatbot: optionalAuth؛ compatibility وcompatible-products وrecommendations وsessions: مصادق؛ البقية عامة |
+| /api/admin | GET /dashboard, /users, /users/:id, /suppliers, /analytics/{revenue,orders,users,top-products}, /settings, /ai/stats, /orders, /orders/quick-stats, /orders/stats, /orders/:id, /products, /products/stats, /categories؛ PUT /users/:id, /settings, /orders/:id؛ PATCH /users/:id/activate, /suppliers/:id/status؛ DELETE /users/:id | مدير فقط (protect + authorize على مستوى الموجّه) |
+
+### تصميم الترتيب متعدد المعايير
+
+يُعدّ ترتيب نتائج البحث مكوّناً حتمياً بالكامل يُجمع فيه عدد من الدرجات الجزئية. ويعرض الجدول 10 الأوزان المطبّقة فعلاً في `searchRankingService`.
+
+TABLE: معايير ترتيب نتائج البحث وأوزانها القصوى
+| المعيار | الوزن الأقصى | طريقة الحساب |
+|---|---|---|
+| الصلة النصية | 20 | درجة `textScore` من MongoDB مقيّدة بـ 10 ثم مضروبة في 2 |
+| تطابق الماركة | 15 | وجود سجل توافق بماركة مطابقة للماركة المستخرجة |
+| تطابق الموديل | 10 | وجود سجل توافق يحوي الموديل المستخرج |
+| تطابق السنة | 5 | وقوع السنة المستخرجة ضمن نطاق سجل توافق |
+| التوافق مع مركبة المستخدم | 30 | المنتج متوافق مع إحدى مركبات المستخدم المسجّل (الوزن الأعلى) |
+| الشعبية | 10 | دالة من عدّادات المشاهدة والشراء |
+| الجودة | 5 | متوسط التقييم ÷ 5 × 5 |
+| التوافر | 3 | المخزون أكبر من صفر |
+| منتج مميّز | 2 | العلم `isFeatured` |
+| الحداثة | 2 | تناقص خطي خلال 30 يوماً من الإنشاء |
+
+## تصميم الواجهة الأمامية
+
+### مبادئ التصميم
+
+صُمّمت الواجهة بلغة إنجليزية واتجاه من اليسار إلى اليمين، مع مراعاة مبادئ الاستخدامية المتعارف عليها [19]: إظهار حالة النظام (هياكل تحميل، إشعارات فورية، مؤشّر "Checking compatibility…")، والاتساق (مكوّنات مشتركة للأزرار والبطاقات)، والوقاية من الأخطاء (تعطيل زر الإرسال عند فراغ الحقل، التحقق من الكميات مقابل المخزون)، ومرونة الاستخدام (الوضع الليلي، البحث بالطبيعي أو بالتصفّح).
+
+### بنية الصفحات
+
+تنقسم الواجهة إلى تخطيطَين مستقلَّين:
+
+- **تخطيط العميل (`Layout`):** ترويسة بروابط التنقّل وأيقونات السمة وقائمة الأمنيات والسلة والحساب، ومحتوى الصفحة، وتذييل بروابط المعلومات، وأداة المحادثة العائمة في كل الصفحات. ويضمّ 27 مساراً (بما فيها صفحة 404) منها 7 محمية بمكوّن `ProtectedRoute` (إتمام الطلب، قائمة الأمنيات، لوحة المستخدم، الملف الشخصي، الطلبات، تفاصيل الطلب، المركبات).
+- **تخطيط الإدارة (`AdminLayout`):** شريط جانبي مقسّم (Main، People، Insights، System)، وترويسة بمسار تنقّل تفصيلي وبحث، ومحتوى، دون ترويسة العميل أو أداة المحادثة. ويُحمى بمكوّن `AdminRoute` الذي يتحقق من دور المدير، ويضمّ 13 مساراً فرعياً.
+
+### إدارة الحالة والاتصال
+
+تُدار الحالة المشتركة بثلاثة سياقات React: `CartContext` (عدد العناصر والإجماليات ومعرّف جلسة الزائر)، و`WishlistContext`، و`ThemeContext` (الوضع الليلي المحفوظ في التخزين المحلي). وتمرّ كل الاتصالات عبر نسخة Axios مركزية في `services/api.js` تُضيف رمز JWT آلياً وتُعالج استجابات 401 بمسح بيانات الجلسة المحلية، بينما تُضيف `cartService` ترويسة `X-Cart-Session` بمعرّف الجلسة المحفوظ في التخزين المحلي تحت المفتاح `cart_session_id`. ويُغلّف كل مورد بخدمة مستقلة (`productService`، `cartService`، `aiSearchService`، …).
+
+### بنية الشيفرة
+
+يوضّح الشكل 12 التنظيم المنطقي لمجلدات المشروع في الواجهتَين.
+
+FIGURE: بنية مجلدات الشيفرة المصدرية للواجهة الخلفية والأمامية
+```plantuml
+@startuml
+skinparam packageStyle folder
+package "backend/src" {
+  package "config" {
+    [environment.js]
+    [openai.js]
+    [redis.js]
+    [evCatalog.js]
+  }
+  package "models (11)" {
+    [User, Product, Category, Order,\nCart, GuestCart, Vehicle, Wishlist,\nChatSession, Settings, ProductNotification]
+  }
+  package "routes (9)" {
+    [auth, product, category, cart,\norder, vehicle, wishlist, ai, admin]
+  }
+  package "controllers (9)" {
+    [auth, product, category, cart,\norder, vehicle, wishlist, aiSearch, admin]
+  }
+  package "services (6)" {
+    [nlpProcessor, aiSearch, searchRanking,\ncompatibility, recommendation, chatbot]
+  }
+  package "middleware (5)" {
+    [auth, validation, rateLimit,\nerrorHandler, upload]
+  }
+  package "utils" {
+    [pricing.js]
+  }
+  [server.js]
+}
+package "frontend/src" {
+  package "pages" {
+    [customer pages (27 routes)]
+    package "admin" {
+      [Overview, Orders, OrderDetail, Products,\nProductForm, Users, UserDetail, Categories,\nSuppliers, Analytics, AIAnalytics, Settings]
+    }
+  }
+  package "components" {
+    [admin, chatbot, common,\nlayout, products, search]
+  }
+  package "contexts" {
+    [CartContext, WishlistContext, ThemeContext]
+  }
+  package "services (11)" {
+    [api.js + one service per resource]
+  }
+  package "hooks" {
+    [useSearchHistory]
+  }
+  [i18n, constants, utils, assets]
+  [App.jsx]
+}
+@enduml
+```
+
+يعكس الشكل 12 التزام الشيفرة بالفصل الطبقي الموصوف في المعمارية: فمجلدات الخادم تُقابل الطبقات الخمس مباشرة، ومجلدات الواجهة تفصل الصفحات عن المكوّنات القابلة لإعادة الاستخدام وعن طبقة الاتصال والسياقات.
+
+## خلاصة الفصل
+
+قدّم هذا الفصل تصميم النظام على مستويات ثلاثة: المعمارية العامة ثلاثية الطبقات مع مبادئ التصميم الحاكمة، وتصميم قاعدة البيانات بإحدى عشرة مجموعة ومخطط صفوف يُبرز محورية المنتج وتضمين التوافق داخله، والتصميم السلوكي عبر ثلاثة مخططات تسلسل ومخطط حالة توضّح كيف تُحصر الاحتمالية في استدعاء النموذج اللغوي وحده. كما وثّق واجهة البرمجة ومستويات الوصول وأوزان الترتيب وتصميم الواجهة الأمامية وبنية الشيفرة. ويُترجم الفصل الخامس هذا التصميم إلى تفاصيل التحقيق البرمجي.

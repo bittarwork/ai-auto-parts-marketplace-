@@ -1,0 +1,64 @@
+@COVER
+
+@FRONT الملخص
+
+يوثّق هذا التقرير مشروع التخرج EV Auto Parts، وهو منصة تجارة إلكترونية متخصصة في قطع غيار السيارات الكهربائية، صُمّمت لمعالجة مشكلة جوهرية في هذا السوق: صعوبة تحديد القطعة المتوافقة مع مركبة المستخدم، إذ يعتمد التوافق على الماركة والموديل وسنة الصنع وخصائص كهربائية يعجز البحث التقليدي بالكلمات المفتاحية عن التعامل معها. تُتيح المنصة للمستخدم البحث بعبارة طبيعية باللغة الإنجليزية، فتستخرج نوع القطعة والماركة والموديل والسنة باستخدام نموذج لغوي كبير (gpt-4o-mini)، ثم تُطبّق تراجعاً تدرجياً بأربع استراتيجيات لضمان إرجاع نتائج، وتُرتّبها بدرجة مركّبة حتمية تمنح أعلى وزن للتوافق مع مركبات المستخدم المسجّلة. ويعتمد قرار التوافق على قواعد صريحة قابلة للتفسير لا على تخمين احتمالي. وتُكمّل المنصة ذلك بسلة تسوّق تعمل للزائر وتُدمج آلياً عند التسجيل، ومساعد محادثة يعرف سياق المستخدم مع مسار بديل قائم على القواعد، وتوصيات مبنية على بيانات المنصة، ولوحة إدارة كاملة.
+
+بُني النظام بمعمارية ثلاثية الطبقات باستخدام React 18 وExpress 4 وMongoDB (Mongoose 7)، بإحدى عشرة مجموعة بيانات وتسع وحدات لواجهة برمجة REST محمية بمصادقة JWT وتفويض حسب الدور وتشفير كلمات المرور بـ bcrypt. واتُّبعت منهجية تطوير تدرجية موثّقة في سجل Git بـ 42 إيداعاً، وتوزّعت المسؤوليات على فريق من ثلاثة طلاب.
+
+اختُبر النظام فعلياً في بيئة تطوير محلية بمفتاح OpenAI غير صالح عن قصد لتقييم المسارات البديلة؛ فنُفّذت 16 حالة اختبار على واجهة البرمجة نجح منها 14 وفشلت اثنتان، وكُشف 11 عيباً أُصلح الحرج منها. وأظهرت النتائج أن حصر دور النموذج اللغوي في طبقة الفهم وإبقاء القرارات حتمية يُحقّق استمرارية الخدمة وقابلية التفسير، مع الإقرار بمحدودية المسارات البديلة. ويختم التقرير بقيود النظام وخارطة طريق مرتّبة بالأولوية تشمل معالجة المعاملات، ودعم الخصائص الكهربائية في التوافق، والاختبار الآلي، والواجهة العربية.
+
+**الكلمات المفتاحية:** السيارات الكهربائية، قطع الغيار، التجارة الإلكترونية، البحث باللغة الطبيعية، النماذج اللغوية الكبيرة، التحقق من التوافق، MERN.
+
+@FRONT Abstract
+
+This report documents EV Auto Parts, a graduation project that delivers an e-commerce platform specialised in electric-vehicle spare parts. The platform addresses a core difficulty of this market: identifying a part that actually fits the user's vehicle, since fitment depends on brand, model, model year and electrical characteristics that keyword search cannot handle. Users search with a natural-language English phrase; a large language model (gpt-4o-mini) extracts the part type, brand, model and year, a four-level progressive fallback guarantees useful results, and a deterministic multi-criteria ranking gives the highest weight to compatibility with the user's registered vehicles. Compatibility itself is decided by explicit, explainable rules rather than probabilistic inference. The platform also provides a guest cart that is merged automatically on login, a context-aware chat assistant with a rule-based fallback, data-driven recommendations, and a complete administration panel.
+
+The system follows a three-tier architecture built with React 18, Express 4 and MongoDB (Mongoose 7), with eleven collections and nine REST API modules protected by JWT authentication, role-based authorisation and bcrypt password hashing. Development followed an incremental methodology recorded in 42 Git commits, with responsibilities shared by a team of three students.
+
+The system was executed and tested in a local development environment with a deliberately invalid OpenAI key to evaluate the fallback paths. Sixteen API test cases were executed: fourteen passed and two failed, and eleven defects were found, one of which (critical) was fixed. The results show that confining the language model to the understanding layer while keeping all decisions deterministic yields service continuity and explainability, while also revealing the limits of the fallback paths. The report closes with the current limitations and a prioritised roadmap covering transactional order creation, electrical attributes in fitment checks, automated testing and Arabic-language support.
+
+**Keywords:** electric vehicles, spare parts, e-commerce, natural-language search, large language models, compatibility checking, MERN.
+
+@TOC
+
+@LOF
+
+@LOT
+
+@FRONT قائمة المصطلحات والاختصارات
+
+TABLE!: المصطلحات والاختصارات المستخدمة في التقرير
+| المصطلح / الاختصار | المعنى |
+|---|---|
+| EV (Electric Vehicle) | مركبة كهربائية تعمل ببطارية ومحرّك كهربائي |
+| Aftermarket | سوق قطع الغيار والخدمات بعد بيع المركبة |
+| Fitment / Compatibility | توافق القطعة مع مركبة محدّدة (ماركة، موديل، سنة، خصائص) |
+| CCS2 / Type 2 / NACS / CHAdeMO | معايير موصلات شحن السيارات الكهربائية |
+| OBC (On-Board Charger) | الشاحن الداخلي الذي يحوّل التيار المتردد إلى مستمر لشحن البطارية |
+| DC-DC Converter | محوّل يُخفّض جهد البطارية العالي إلى 12 فولت لتغذية الأنظمة المساعدة |
+| LLM (Large Language Model) | نموذج لغوي كبير مبني على معمارية المحوّل قادر على فهم النص وتوليده |
+| NLP (Natural Language Processing) | المعالجة اللغوية الطبيعية |
+| Zero-shot Extraction | استخراج بنية من نص بتعليمات فقط دون أمثلة تدريب |
+| Progressive Fallback | تراجع تدرجي: تخفيف قيود البحث تدريجياً حتى ظهور نتائج |
+| Graceful Degradation | تدهور رشيق: استمرار الخدمة بوظائف مخفّضة عند تعطّل مكوّن |
+| Deterministic | حتمي: يُنتج النتيجة نفسها للمدخلات نفسها بقواعد صريحة |
+| Data-Driven | مبني على البيانات المخزّنة دون نموذج تعلّم آلي مدرّب |
+| MERN | MongoDB, Express, React, Node.js |
+| SPA (Single-Page Application) | تطبيق ويب أحادي الصفحة |
+| REST | نمط معماري لواجهات البرمجة القائمة على الموارد وHTTP |
+| JWT (JSON Web Token) | رمز موقّع لنقل الادّعاءات بين طرفَين، يُستخدم للمصادقة |
+| bcrypt | خوارزمية تجزئة تكيّفية لكلمات المرور |
+| CORS | سياسة مشاركة الموارد بين الأصول المختلفة في المتصفح |
+| Rate Limiting | الحدّ من عدد الطلبات المسموح بها في نافذة زمنية |
+| Middleware | وسيط برمجي يُعالج الطلب قبل وصوله إلى المتحكّم |
+| ODM (Object Document Mapper) | طبقة تربط الكائنات بالمستندات (Mongoose) |
+| TTL Index | فهرس يحذف المستندات آلياً بعد مدة محدّدة |
+| Soft Delete | حذف ناعم بتعطيل السجل بدلاً من إزالته |
+| Snapshot | لقطة من بيانات المنتج تُحفَظ مع الطلب وقت الشراء |
+| Seed | سكربت يُهيّئ قاعدة البيانات ببيانات أولية تجريبية |
+| KPI | مؤشّر أداء رئيسي يُعرض في لوحة الإدارة |
+| UML | لغة النمذجة الموحّدة |
+| PlantUML | أداة نصية لتوليد مخططات UML |
+| IDOR | الوصول غير المصرّح به إلى مورد عبر تغيير معرّفه |
+| EUR | اليورو، العملة المعتمدة في المنصة |

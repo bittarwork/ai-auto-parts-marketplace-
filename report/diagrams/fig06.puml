@@ -1,0 +1,35 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam linetype ortho
+package "Frontend (React 18 SPA)" {
+  [Pages] --> [Components]
+  [Pages] --> [Contexts\n(Cart, Wishlist, Theme)]
+  [Pages] --> [API Services\n(Axios)]
+  [Components] --> [Contexts\n(Cart, Wishlist, Theme)]
+}
+package "Backend (Express 4)" {
+  [Routes] --> [Middleware\n(protect, authorize,\nvalidate, rate limit)]
+  [Routes] --> [Controllers]
+  [Controllers] --> [Services]
+  [Controllers] --> [Models\n(Mongoose)]
+  [Services] --> [Models\n(Mongoose)]
+  package "Services" {
+    [nlpProcessorService]
+    [aiSearchService]
+    [searchRankingService]
+    [compatibilityService]
+    [recommendationService]
+    [chatbotService]
+  }
+  [Config\n(environment, openai,\nredis, evCatalog)]
+}
+database "MongoDB" as DB
+cloud "OpenAI API" as OAI
+database "Redis (optional)" as RD
+[API Services\n(Axios)] --> [Routes] : HTTP/JSON
+[Models\n(Mongoose)] --> DB
+[nlpProcessorService] --> OAI
+[chatbotService] --> OAI
+[aiSearchService] ..> RD
+[chatbotService] ..> RD
+@enduml

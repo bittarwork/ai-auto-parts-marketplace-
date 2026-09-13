@@ -1,0 +1,14 @@
+@startuml
+skinparam componentStyle rectangle
+actor "End user\n(Browser)" as U
+node "Frontend\nReact 18 + Vite\n(port 5173)" as FE
+node "Backend API\nNode.js + Express 4\n(port 5000)" as BE
+database "MongoDB\n(Mongoose 7)" as DB
+cloud "OpenAI API\n(gpt-4o-mini)" as AI
+database "Redis\n(optional cache)" as R
+U --> FE : HTTPS/HTTP
+FE --> BE : REST /api/* (JSON, JWT Bearer,\nX-Cart-Session header)
+BE --> DB : queries / text index
+BE --> AI : NLP extraction,\nchat completions
+BE ..> R : cache (lazy connect,\ndisabled when unavailable)
+@enduml

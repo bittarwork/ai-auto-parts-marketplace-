@@ -1,0 +1,20 @@
+@startuml
+[*] --> pending : createOrder()
+pending --> confirmed : admin updates status
+pending --> cancelled : customer cancelOrder()\nor admin
+confirmed --> processing : admin
+confirmed --> cancelled : customer cancelOrder()\nor admin
+processing --> shipped : admin
+processing --> cancelled : customer cancelOrder()\nor admin
+shipped --> delivered : admin
+delivered --> [*]
+cancelled --> [*]
+note right of cancelled
+  Stock is restored for each item
+  when the order becomes cancelled.
+end note
+note bottom of pending
+  Payment status is tracked separately:
+  pending | paid | failed | refunded
+end note
+@enduml

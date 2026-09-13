@@ -1,0 +1,51 @@
+@FRONT المراجع
+
+[1] International Energy Agency (IEA), Global EV Outlook 2024, IEA, Paris, 2024. Available: https://www.iea.org/reports/global-ev-outlook-2024
+
+[2] Auto Care Association, "ACES and PIES Data Standards", Auto Care Association. Available: https://www.autocare.org/data-and-information/data-standards
+
+[3] C. D. Manning, P. Raghavan, and H. Schütze, Introduction to Information Retrieval, Cambridge University Press, 2008.
+
+[4] MongoDB Inc., "Text Search" and "Text Search Languages", MongoDB Manual. Available: https://www.mongodb.com/docs/manual/text-search/
+
+[5] D. Jurafsky and J. H. Martin, Speech and Language Processing, 3rd ed. (online draft), Stanford University, 2024. Available: https://web.stanford.edu/~jurafsky/slp3/
+
+[6] T. B. Brown et al., "Language Models are Few-Shot Learners", Advances in Neural Information Processing Systems (NeurIPS), vol. 33, 2020.
+
+[7] OpenAI, "API Reference – Chat Completions", OpenAI Platform Documentation. Available: https://platform.openai.com/docs/api-reference/chat
+
+[8] F. Ricci, L. Rokach, and B. Shapira (Eds.), Recommender Systems Handbook, 2nd ed., Springer, 2015.
+
+[9] G. Linden, B. Smith, and J. York, "Amazon.com Recommendations: Item-to-Item Collaborative Filtering", IEEE Internet Computing, vol. 7, no. 1, pp. 76–80, 2003.
+
+[10] R. T. Fielding, Architectural Styles and the Design of Network-based Software Architectures, Ph.D. dissertation, University of California, Irvine, 2000.
+
+[11] OWASP Foundation, OWASP Top 10:2021. Available: https://owasp.org/Top10/
+
+[12] N. Provos and D. Mazières, "A Future-Adaptable Password Scheme", in Proceedings of the USENIX Annual Technical Conference, FREENIX Track, 1999.
+
+[13] Helmet.js, "Helmet – Help secure Express apps with various HTTP headers". Available: https://helmetjs.github.io/
+
+[14] M. Jones, J. Bradley, and N. Sakimura, "JSON Web Token (JWT)", RFC 7519, Internet Engineering Task Force (IETF), May 2015.
+
+[15] Object Management Group (OMG), Unified Modeling Language (UML) Specification, version 2.5.1, 2017.
+
+[16] PlantUML, "PlantUML – Open-source tool that uses simple textual descriptions to draw UML diagrams". Available: https://plantuml.com/
+
+[17] ISO/IEC 25010:2011, Systems and software engineering — Systems and software Quality Requirements and Evaluation (SQuaRE) — System and software quality models, International Organization for Standardization, 2011.
+
+[18] I. Sommerville, Software Engineering, 10th ed., Pearson, 2016.
+
+[19] J. Nielsen, "10 Usability Heuristics for User Interface Design", Nielsen Norman Group, 1994 (updated 2020). Available: https://www.nngroup.com/articles/ten-usability-heuristics/
+
+[20] OpenJS Foundation, "Node.js Documentation". Available: https://nodejs.org/docs/
+
+[21] OpenJS Foundation, "Express – Node.js web application framework", version 4.x documentation. Available: https://expressjs.com/
+
+[22] Automattic, "Mongoose ODM v7 Documentation". Available: https://mongoosejs.com/docs/
+
+[23] Meta Open Source, "React Documentation". Available: https://react.dev/
+
+[24] Evan You and Vite contributors, "Vite Documentation". Available: https://vitejs.dev/
+
+[25] Tailwind Labs, "Tailwind CSS Documentation", version 3. Available: https://tailwindcss.com/docs

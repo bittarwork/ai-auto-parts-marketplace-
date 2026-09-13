@@ -1,0 +1,52 @@
+@startuml
+skinparam packageStyle folder
+package "backend/src" {
+  package "config" {
+    [environment.js]
+    [openai.js]
+    [redis.js]
+    [evCatalog.js]
+  }
+  package "models (11)" {
+    [User, Product, Category, Order,\nCart, GuestCart, Vehicle, Wishlist,\nChatSession, Settings, ProductNotification]
+  }
+  package "routes (9)" {
+    [auth, product, category, cart,\norder, vehicle, wishlist, ai, admin]
+  }
+  package "controllers (9)" {
+    [auth, product, category, cart,\norder, vehicle, wishlist, aiSearch, admin]
+  }
+  package "services (6)" {
+    [nlpProcessor, aiSearch, searchRanking,\ncompatibility, recommendation, chatbot]
+  }
+  package "middleware (5)" {
+    [auth, validation, rateLimit,\nerrorHandler, upload]
+  }
+  package "utils" {
+    [pricing.js]
+  }
+  [server.js]
+}
+package "frontend/src" {
+  package "pages" {
+    [customer pages (27 routes)]
+    package "admin" {
+      [Overview, Orders, OrderDetail, Products,\nProductForm, Users, UserDetail, Categories,\nSuppliers, Analytics, AIAnalytics, Settings]
+    }
+  }
+  package "components" {
+    [admin, chatbot, common,\nlayout, products, search]
+  }
+  package "contexts" {
+    [CartContext, WishlistContext, ThemeContext]
+  }
+  package "services (11)" {
+    [api.js + one service per resource]
+  }
+  package "hooks" {
+    [useSearchHistory]
+  }
+  [i18n, constants, utils, assets]
+  [App.jsx]
+}
+@enduml

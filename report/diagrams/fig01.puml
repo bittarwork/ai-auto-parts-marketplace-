@@ -1,0 +1,46 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+actor "Guest" as G
+actor "Customer" as C
+actor "Supplier" as S
+actor "Administrator" as A
+rectangle "EV Auto Parts Platform" {
+  usecase "Browse products & categories" as UC1
+  usecase "Natural-language smart search" as UC2
+  usecase "Manage guest cart" as UC3
+  usecase "Chat with AI assistant" as UC4
+  usecase "Register / Login\n(merge guest cart)" as UC5
+  usecase "Manage vehicles" as UC6
+  usecase "Check part compatibility" as UC7
+  usecase "Manage wishlist" as UC8
+  usecase "Checkout & create order" as UC9
+  usecase "Cancel own order" as UC10
+  usecase "View recommendations" as UC11
+  usecase "Create / update own products\n& stock" as UC12
+  usecase "Manage products, categories,\norders, users, suppliers" as UC13
+  usecase "Configure settings\n(currency, tax, shipping)" as UC14
+  usecase "View dashboard & AI statistics" as UC15
+}
+G --> UC1
+G --> UC2
+G --> UC3
+G --> UC4
+G --> UC5
+C --> UC1
+C --> UC2
+C --> UC4
+C --> UC6
+C --> UC7
+C --> UC8
+C --> UC9
+C --> UC10
+C --> UC11
+S --> UC12
+A --> UC13
+A --> UC14
+A --> UC15
+UC7 ..> UC6 : <<include>>
+UC9 ..> UC5 : <<include>>
+@enduml
