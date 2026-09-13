@@ -3,6 +3,23 @@ const nlpProcessor = require('../services/nlpProcessorService');
 const compatibilityService = require('../services/compatibilityService');
 const recommendationService = require('../services/recommendationService');
 const chatbotService = require('../services/chatbotService');
+const Vehicle = require('../models/Vehicle');
+
+/**
+ * Object-level authorization helper for vehicle resources.
+ * Returns the vehicle when it exists and belongs to the caller
+ * (administrators may access any vehicle); otherwise returns null.
+ * A 404 is used for both "missing" and "not owned" to match the
+ * convention already applied in the order and vehicle controllers.
+ */
+async function loadOwnedVehicle(vehicleId, user) {
+  if (!vehicleId || !user) return null;
+  const vehicle = await Vehicle.findById(vehicleId).lean();
+  if (!vehicle) return null;
+  const isOwner = vehicle.user.toString() === user._id.toString();
+  const isAdmin = user.role === 'administrator';
+  return (isOwner || isAdmin) ? vehicle : null;
+}
 
 /**
  * ★★★ INTELLIGENT SEARCH - Main endpoint
@@ -133,6 +150,15 @@ exports.checkCompatibility = async (req, res) => {
         message: 'Product ID and Vehicle ID are required'
       });
     }
+
+    // Server-side ownership check before any compatibility lookup
+    const vehicle = await loadOwnedVehicle(vehicleId, req.user);
+    if (!vehicle) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vehicle not found'
+      });
+    }
     
     const result = await compatibilityService.checkCompatibility(productId, vehicleId);
     
@@ -159,6 +185,15 @@ exports.getCompatibleProducts = async (req, res) => {
   try {
     const { vehicleId } = req.params;
     const { category, page = 1, limit = 20 } = req.query;
+
+    // Server-side ownership check before listing compatible products
+    const vehicle = await loadOwnedVehicle(vehicleId, req.user);
+    if (!vehicle) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vehicle not found'
+      });
+    }
     
     const result = await compatibilityService.findCompatibleProducts(vehicleId, {
       category,
@@ -295,6 +330,15 @@ exports.chatbotMessage = async (req, res) => {
     }
     
     const userId = req.user ? req.user._id : null;
+
+    // Prevent appending messages to a session owned by another user
+    const access = await chatbotService.canAccessSession(sessionId, userId);
+    if (!access.allowed) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to access this chat session'
+      });
+    }
     
     const response = await chatbotService.processMessage(
       message,
@@ -350,6 +394,16 @@ exports.getChatbotQuickActions = async (req, res) => {
 exports.clearChatbotHistory = async (req, res) => {
   try {
     const { sessionId } = req.params;
+    const userId = req.user ? req.user._id : null;
+
+    // Same ownership rule as reading a session
+    const access = await chatbotService.canAccessSession(sessionId, userId);
+    if (!access.allowed) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to access this chat session'
+      });
+    }
     
     await chatbotService.clearChatHistory(sessionId);
     

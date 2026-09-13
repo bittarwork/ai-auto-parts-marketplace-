@@ -30,17 +30,17 @@ router.get('/related-searches', aiSearchController.getRelatedSearches);
 
 /**
  * @route   POST /api/ai/compatibility
- * @desc    Check if product is compatible with vehicle
- * @access  Public
+ * @desc    Check if product is compatible with one of the caller's vehicles
+ * @access  Private (vehicle ownership enforced in controller)
  */
-router.post('/compatibility', aiSearchController.checkCompatibility);
+router.post('/compatibility', protect, aiSearchController.checkCompatibility);
 
 /**
  * @route   GET /api/ai/compatible-products/:vehicleId
- * @desc    Get all products compatible with a vehicle
- * @access  Public
+ * @desc    Get all products compatible with one of the caller's vehicles
+ * @access  Private (vehicle ownership enforced in controller)
  */
-router.get('/compatible-products/:vehicleId', aiSearchController.getCompatibleProducts);
+router.get('/compatible-products/:vehicleId', protect, aiSearchController.getCompatibleProducts);
 
 // ★★ RECOMMENDATION ROUTES ★★
 
@@ -105,7 +105,7 @@ router.get('/chatbot/sessions', protect, aiSearchController.getUserChatSessions)
 /**
  * @route   GET /api/ai/chatbot/sessions/:sessionId
  * @desc    Get messages for a specific chat session
- * @access  Public (but filtered by user if authenticated)
+ * @access  Owner only for user sessions; sessionId holder for guest sessions
  */
 router.get('/chatbot/sessions/:sessionId', optionalAuth, aiSearchController.getSessionMessages);
 
@@ -119,8 +119,8 @@ router.delete('/chatbot/sessions/:sessionId', protect, aiSearchController.delete
 /**
  * @route   DELETE /api/ai/chatbot/:sessionId
  * @desc    Clear chatbot conversation history (cache only)
- * @access  Public
+ * @access  Owner only for user sessions; sessionId holder for guest sessions
  */
-router.delete('/chatbot/:sessionId', aiSearchController.clearChatbotHistory);
+router.delete('/chatbot/:sessionId', optionalAuth, aiSearchController.clearChatbotHistory);
 
 module.exports = router;

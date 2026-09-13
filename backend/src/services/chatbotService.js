@@ -6,6 +6,22 @@ const ChatSession = require('../models/ChatSession');
 const { EV_BRANDS } = require('../config/evCatalog');
 
 class ChatbotService {
+
+  /**
+   * Object-level access rule for chat sessions.
+   * - Session owned by a user  -> only that user may access it.
+   * - Guest session (user null) -> accessible by whoever holds the sessionId
+   *   (possession-based, keeps the guest chatbot working without login).
+   * - Unknown sessionId         -> allowed (a new session will be created).
+   * @returns {{ allowed: boolean, exists: boolean }}
+   */
+  async canAccessSession(sessionId, userId = null) {
+    const session = await ChatSession.findOne({ sessionId }).select('user').lean();
+    if (!session) return { allowed: true, exists: false };
+    if (!session.user) return { allowed: true, exists: true };
+    const allowed = !!userId && session.user.toString() === userId.toString();
+    return { allowed, exists: true };
+  }
   
   /**
    * Process chatbot message with persistent history and product linking
@@ -289,8 +305,12 @@ class ChatbotService {
    */
   async getSessionMessages(sessionId, userId = null) {
     try {
-      const query = { sessionId };
-      if (userId) query.user = userId;
+      // Owned sessions are visible to their owner only; guest sessions
+      // (user === null) are visible to the holder of the sessionId.
+      const query = {
+        sessionId,
+        $or: [{ user: null }, ...(userId ? [{ user: userId }] : [])]
+      };
       
       const session = await ChatSession.findOne(query)
         .populate('messages.suggestedProducts.productId', 'name partNumber price currency images stock')
