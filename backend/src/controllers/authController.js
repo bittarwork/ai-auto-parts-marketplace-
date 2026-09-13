@@ -354,7 +354,7 @@ exports.addAddress = async (req, res) => {
       city,
       district: district || '',
       postalCode: postalCode || '',
-      country: country || 'Syria',
+      country: country || 'Germany',
       phone: phone || '',
       isDefault: isDefault || user.addresses.length === 0,
       latitude: latitude ? Number(latitude) : undefined,

@@ -17,7 +17,14 @@ async function calculateCartTotals(items) {
   });
   const pricing = await getPricingSettings();
   const totals = calculateTotals(subtotal, pricing);
-  return { validItems, totalItems, ...totals };
+  // Expose the pricing rules so the UI can label tax/shipping from Settings
+  return {
+    validItems,
+    totalItems,
+    ...totals,
+    taxRatePercent: Math.round(pricing.taxRate * 100 * 100) / 100,
+    freeShippingThreshold: pricing.freeShippingThreshold
+  };
 }
 
 /**
@@ -41,7 +48,7 @@ exports.getCart = async (req, res) => {
       if (!sessionId) {
         return res.json({
           success: true,
-          data: { cart: { items: [] }, summary: { subtotal: 0, totalItems: 0, tax: 0, shipping: 0, total: 0, currency: 'EUR' } }
+          data: { cart: { items: [] }, summary: { subtotal: 0, totalItems: 0, tax: 0, shipping: 0, total: 0, currency: 'EUR', taxRatePercent: 0, freeShippingThreshold: 0 } }
         });
       }
       let guestCart = await GuestCart.findOne({ sessionId })
@@ -51,7 +58,8 @@ exports.getCart = async (req, res) => {
       cartData = guestCart;
     }
 
-    const { validItems, subtotal, totalItems, tax, shipping, total, currency } = await calculateCartTotals(cartData.items || []);
+    const { validItems, subtotal, totalItems, tax, shipping, total, currency, taxRatePercent, freeShippingThreshold } =
+      await calculateCartTotals(cartData.items || []);
 
     res.json({
       success: true,
@@ -63,7 +71,9 @@ exports.getCart = async (req, res) => {
           tax,
           shipping,
           total,
-          currency
+          currency,
+          taxRatePercent,
+          freeShippingThreshold
         }
       }
     });

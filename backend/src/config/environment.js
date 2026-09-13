@@ -38,17 +38,6 @@ const config = {
     apiKey: process.env.OPENAI_API_KEY
   },
   
-  // Payment gateways
-  payment: {
-    moyasar: {
-      apiKey: process.env.MOYASAR_API_KEY,
-      secretKey: process.env.MOYASAR_SECRET_KEY
-    },
-    tap: {
-      apiKey: process.env.TAP_API_KEY
-    }
-  },
-  
   // Email
   email: {
     host: process.env.SMTP_HOST || 'smtp.gmail.com',

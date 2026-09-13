@@ -37,13 +37,6 @@ router.get('/featured', apiLimiter, productController.getFeaturedProducts);
 router.get('/category/:categoryId', apiLimiter, productController.getProductsByCategory);
 
 /**
- * @route   GET /api/products/slug/:slug
- * @desc    Get product by slug
- * @access  Public
- */
-router.get('/slug/:slug', apiLimiter, productController.getProductBySlug);
-
-/**
  * @route   POST /api/products/:id/notify
  * @desc    Subscribe to stock notification (login required)
  * @access  Private
@@ -73,6 +66,19 @@ router.post(
   productRules,
   validate,
   productController.createProduct
+);
+
+/**
+ * @route   PUT /api/products/bulk
+ * @desc    Bulk update products
+ * @access  Private (Admin only)
+ * NOTE: Static path must be registered BEFORE the dynamic '/:id' route.
+ */
+router.put(
+  '/bulk',
+  protect,
+  authorize('administrator'),
+  productController.bulkUpdate
 );
 
 /**
@@ -129,18 +135,6 @@ router.get(
   protect,
   authorize('administrator'),
   productController.getProductStats
-);
-
-/**
- * @route   PUT /api/products/bulk
- * @desc    Bulk update products
- * @access  Private (Admin only)
- */
-router.put(
-  '/bulk',
-  protect,
-  authorize('administrator'),
-  productController.bulkUpdate
 );
 
 module.exports = router;

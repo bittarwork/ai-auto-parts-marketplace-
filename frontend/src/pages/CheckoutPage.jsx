@@ -621,15 +621,16 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Shipping</span>
                   <span>
-                    {summary.subtotal >= 500 ? (
+                    {/* Shipping value is computed server-side from store Settings */}
+                    {summary.shipping === 0 ? (
                       <span className="text-success-600">FREE</span>
                     ) : (
-                      formatPrice(50)
+                      formatPrice(summary.shipping)
                     )}
                   </span>
                 </div>
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>Tax (15%)</span>
+                  <span>Tax ({summary.taxRatePercent ?? 0}%)</span>
                   <span>{formatPrice(summary.tax)}</span>
                 </div>
               </div>

@@ -334,22 +334,23 @@ export default function CartPage() {
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Shipping</span>
                   <span className="font-medium">
-                    {summary.subtotal >= 500 ? (
+                    {/* Shipping and threshold come from store Settings via the API */}
+                    {summary.shipping === 0 ? (
                       <span className="text-success-600">FREE</span>
                     ) : (
-                      formatPrice(50)
+                      formatPrice(summary.shipping)
                     )}
                   </span>
                 </div>
                 
-                {summary.subtotal < 500 && (
+                {summary.shipping > 0 && summary.freeShippingThreshold > summary.subtotal && (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Add {formatPrice(500 - summary.subtotal)} more for free shipping
+                    Add {formatPrice(summary.freeShippingThreshold - summary.subtotal)} more for free shipping
                   </p>
                 )}
                 
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>Tax (15%)</span>
+                  <span>Tax ({summary.taxRatePercent ?? 0}%)</span>
                   <span className="font-medium">{formatPrice(summary.tax)}</span>
                 </div>
                 

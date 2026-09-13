@@ -17,11 +17,8 @@ const EMPTY_FORM = {
   partNumber: '',
   category: '',
   price: '',
-  originalPrice: '',
   stock: '',
   supplier: '',
-  brand: '',
-  condition: 'new',
   isFeatured: false,
   isActive: true,
   specifications: [],
@@ -107,11 +104,8 @@ const ProductFormPage = () => {
             partNumber: p.partNumber || '',
             category: p.category?._id || p.category || '',
             price: p.price || '',
-            originalPrice: p.originalPrice || '',
             stock: p.stock || '',
             supplier: p.supplier?._id || p.supplier || '',
-            brand: getLocalizedText(p.brand),
-            condition: p.condition || 'new',
             isFeatured: p.isFeatured || false,
             isActive: p.isActive !== undefined ? p.isActive : true,
             specifications: normalizeSpecifications(p.specifications),
@@ -185,9 +179,13 @@ const ProductFormPage = () => {
         })),
         compatibility: normalizeCompatibility(form.compatibility),
         price: parseFloat(form.price),
-        originalPrice: form.originalPrice ? parseFloat(form.originalPrice) : undefined,
         stock: parseInt(form.stock)
       };
+
+      // Do not send an empty supplier; the backend assigns the owner automatically
+      if (!payload.supplier) {
+        delete payload.supplier;
+      }
 
       if (isEdit) {
         await updateProduct(id, payload);
@@ -295,31 +293,9 @@ const ProductFormPage = () => {
               placeholder="e.g. TY-1234-A"
             />
           </div>
-          <div>
-            <label className={labelClass}>Brand</label>
-            <input
-              type="text"
-              value={form.brand}
-              onChange={(e) => handleChange('brand', e.target.value)}
-              className={inputClass}
-              placeholder="e.g. Toyota"
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Condition</label>
-            <select
-              value={form.condition}
-              onChange={(e) => handleChange('condition', e.target.value)}
-              className={inputClass}
-            >
-              <option value="new">New</option>
-              <option value="used">Used</option>
-              <option value="refurbished">Refurbished</option>
-            </select>
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Price (EUR) *</label>
             <input
@@ -329,18 +305,6 @@ const ProductFormPage = () => {
               step="0.01"
               value={form.price}
               onChange={(e) => handleChange('price', e.target.value)}
-              className={inputClass}
-              placeholder="0.00"
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Original Price (EUR)</label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.originalPrice}
-              onChange={(e) => handleChange('originalPrice', e.target.value)}
               className={inputClass}
               placeholder="0.00"
             />

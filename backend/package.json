@@ -1,5 +1,5 @@
 {
-  "name": "chinese-auto-parts-backend",
+  "name": "ev-auto-parts-backend",
   "version": "1.0.0",
   "description": "Backend API for EV Auto Parts e-commerce with natural language search",
   "main": "src/server.js",

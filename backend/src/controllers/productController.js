@@ -200,44 +200,6 @@ exports.getProductById = async (req, res) => {
 };
 
 /**
- * Get product by slug
- * GET /api/products/slug/:slug
- * @access Public
- */
-exports.getProductBySlug = async (req, res) => {
-  try {
-    const { slug } = req.params;
-    
-    const product = await Product.findOne({ slug, isActive: true })
-      .populate('category', 'name slug description')
-      .lean();
-    
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
-    }
-    
-    // Increment view count
-    Product.findByIdAndUpdate(product._id, { $inc: { viewCount: 1 } }).exec();
-    
-    res.json({
-      success: true,
-      data: product
-    });
-    
-  } catch (error) {
-    console.error('[Product Controller] GetBySlug error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching product',
-      error: error.message
-    });
-  }
-};
-
-/**
  * Create new product
  * POST /api/products
  * @access Private (Admin/Supplier)
@@ -246,11 +208,14 @@ exports.createProduct = async (req, res) => {
   try {
     const productData = req.body;
     
-    // Add created by user
-    productData.createdBy = req.user._id;
-    
-    // If supplier, automatically approve if they own the product
+    // Suppliers always own the products they create
     if (req.user.role === 'supplier') {
+      productData.supplier = req.user._id;
+    }
+
+    // Administrators may assign a supplier explicitly; otherwise the admin
+    // account is stored as the owning supplier so the required field is satisfied
+    if (!productData.supplier) {
       productData.supplier = req.user._id;
     }
     
@@ -314,8 +279,7 @@ exports.updateProduct = async (req, res) => {
       });
     }
     
-    // Prevent changing certain fields
-    delete updates.createdBy;
+    // Prevent changing ownership and analytics counters
     delete updates.supplier;
     delete updates.purchaseCount;
     delete updates.viewCount;
@@ -565,12 +529,11 @@ exports.bulkUpdate = async (req, res) => {
       });
     }
     
-    // Prevent updating sensitive fields
+    // Only whitelisted schema fields may be bulk-updated
     const allowedUpdates = {
       isActive: updates.isActive,
       isFeatured: updates.isFeatured,
-      price: updates.price,
-      discount: updates.discount
+      price: updates.price
     };
     
     // Remove undefined values

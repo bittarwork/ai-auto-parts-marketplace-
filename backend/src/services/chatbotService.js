@@ -3,6 +3,7 @@ const { cacheHelper, cacheKeys } = require('../config/redis');
 const Vehicle = require('../models/Vehicle');
 const Product = require('../models/Product');
 const ChatSession = require('../models/ChatSession');
+const { EV_BRANDS } = require('../config/evCatalog');
 
 class ChatbotService {
   
@@ -172,11 +173,10 @@ class ChatbotService {
         }
       }
       
-      // Also check for brand mentions in the text
-      const brands = ['chery', 'geely', 'mg', 'haval', 'great wall', 'changan', 'byd'];
-      const mentionedBrand = brands.find(b => combinedText.includes(b));
+      // Also check for EV brand mentions in the text (shared catalog list)
+      const mentionedBrand = EV_BRANDS.find(b => combinedText.includes(b.toLowerCase()));
       if (mentionedBrand && !searchQuery['compatibility']) {
-        searchQuery['compatibility.brand'] = new RegExp(mentionedBrand, 'i');
+        searchQuery['compatibility.brand'] = mentionedBrand;
       }
       
       const products = await Product.find(searchQuery)
@@ -421,7 +421,7 @@ class ChatbotService {
     
     if (lowerMessage.includes('shipping') || lowerMessage.includes('توصيل') || lowerMessage.includes('شحن')) {
       return isArabic
-        ? 'نقدم خدمة التوصيل لجميع مدن المملكة. عادة ما يستغرق التوصيل من 3-5 أيام عمل.'
+        ? 'نقدم خدمة التوصيل داخل أوروبا. عادة ما يستغرق التوصيل من 3-5 أيام عمل.'
         : 'We offer delivery across Europe. Delivery usually takes 3-5 business days.';
     }
     

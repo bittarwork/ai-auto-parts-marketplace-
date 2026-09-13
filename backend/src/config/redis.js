@@ -80,6 +80,10 @@ const cacheKeys = {
   // Product cache
   product: (productId) => 
     `product:${productId}`,
+
+  // Featured products list cache
+  featured: () =>
+    'products:featured',
   
   // Search suggestions
   suggestions: (query, lang) => 

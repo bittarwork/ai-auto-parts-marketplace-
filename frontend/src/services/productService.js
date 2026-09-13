@@ -26,15 +26,6 @@ class ProductService {
   }
   
   /**
-   * Get product by slug
-   * @param {string} slug - Product slug
-   * @returns {Promise<Object>} Product details
-   */
-  async getProductBySlug(slug) {
-    return api.get(`/products/slug/${slug}`);
-  }
-  
-  /**
    * Get products by category
    * @param {string} categoryId - Category ID
    * @param {Object} params - Query parameters
